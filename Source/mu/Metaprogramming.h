@@ -2,13 +2,16 @@
 
 namespace details
 {
+	using std::decay; 
+	using std::result_of;
+
 	template<template<class...> class FUNCTOR, typename T> 
-	using FunctorApplication = std::result_of<FUNCTOR<T>(T&)>;
+	using FunctorApplication = result_of<FUNCTOR<typename decay<T>::type>(T&)>;
 
 	template<template<class...> class FUNCTOR, typename T>
 	typename FunctorApplication<FUNCTOR,T>::type CallFunctor(T&& t)
 	{
-		FUNCTOR<T> f;
+		FUNCTOR<decay<T>::type> f;
 		return f(t);
 	}
 
@@ -27,7 +30,7 @@ namespace details
 	template<template<typename...> class FUNCTOR, typename R, typename T, typename... TS>
 	constexpr auto FoldRec(R r, T&& t, TS&&... ts)
 	{
-		FUNCTOR<T> f;
+		FUNCTOR<decay<T>::type> f;
 		r = f(r, t);
 		return FoldRec<FUNCTOR>(r, ts...);
 	}

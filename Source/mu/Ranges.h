@@ -172,15 +172,14 @@ struct RangeFront
 template<typename RANGE>
 struct RangeMinSizeFolder
 {
-	// TODO: Would be nice not to need std::decay here, is something in Fold wrong?
-	template<typename T=RANGE, typename std::enable_if<std::decay<T>::type::HasSize, int>::type=0>
+	template<typename T=RANGE, typename std::enable_if<T::HasSize, int>::type=0>
 	constexpr size_t operator()(size_t s, const RANGE& r)
 	{
 		size_t rs = r.Size();
 		return rs < s ? rs : s;
 	}
 
-	template<typename T = RANGE, typename std::enable_if<!std::decay<T>::type::HasSize, int>::type=0>
+	template<typename T = RANGE, typename std::enable_if<!T::HasSize, int>::type=0>
 	constexpr size_t operator()(size_t s, const RANGE&)
 	{
 		return s;
