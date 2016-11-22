@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\Source\mu\Main.cpp" />
+    <ClCompile Include="..\Source\mu\Debug.cpp" />
+    <ClCompile Include="..\Source\mu\VulkanTools.cpp">
+      <Filter>Vulkan</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Source\mu\Scope.h" />
+    <ClInclude Include="..\Source\mu\Debug.h" />
+    <ClInclude Include="..\Source\mu\Utils.h" />
+    <ClInclude Include="..\Source\mu\VulkanTools.h">
+      <Filter>Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\mu\Math.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\mu\Array.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\mu\Ranges.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\mu\Metaprogramming.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Core">
+      <UniqueIdentifier>{caab5548-a5f7-4658-ab1b-34032275d0e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Vulkan">
+      <UniqueIdentifier>{662f3486-e133-42e6-91ff-c576f3a11274}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
