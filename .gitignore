@@ -2,3 +2,5 @@
 ipch
 *.sdf
 *.vcxproj.user
+Intermediate/
+Binaries/

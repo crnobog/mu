@@ -71,10 +71,16 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;C:\Code\glfw-3.2\install\include</IncludePath>
     <LibraryPath>C:\Code\glfw-3.2\install\lib;$(VULKAN_SDK)\Bin;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)..\Binaries\</OutDir>
+    <IntDir>$(SolutionDir)..\Intermediate\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)-$(Platform)-$(Configuration)</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(VULKAN_SDK)\Include;$(VULKAN_SDK)\Third-Party\Include;C:\Code\glfw-3.2\install\include</IncludePath>
     <LibraryPath>C:\Code\glfw-3.2\install\lib;$(VULKAN_SDK)\Bin;$(LibraryPath)</LibraryPath>
+    <OutDir>$(SolutionDir)..\Binaries\</OutDir>
+    <IntDir>$(SolutionDir)..\Intermediate\$(ProjectName)\$(Platform)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)-$(Platform)-$(Configuration)</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
