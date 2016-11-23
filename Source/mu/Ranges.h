@@ -98,21 +98,7 @@ public:
 inline IotaRange<size_t> Iota(size_t start=0) { return IotaRange<size_t>(start); }
 
 
-template<bool HEAD, bool... TAIL>
-struct AllOfImpl
-{
-	static constexpr bool Value = HEAD && AllOfImpl<TAIL...>::Value;
-};
-
-template<bool HEAD>
-struct AllOfImpl<HEAD>
-{
-	static constexpr bool Value = HEAD;
-};
-
-template<bool... VALS>
-using AllOf = AllOfImpl<VALS...>;
-
+// ZipRange combines multiple ranges and iterates them in lockstep
 template<typename... RANGES>
 class ZipRange
 {
