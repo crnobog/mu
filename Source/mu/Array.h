@@ -99,8 +99,8 @@ private:
 	void Grow(size_t new_size)
 	{
 		T* new_data = (T*)malloc(sizeof(T) * new_size);
-		auto from = Range(m_data, m_num);
-		auto to = Range(new_data, m_num);
+		auto from = mu::Range(m_data, m_num);
+		auto to = mu::Range(new_data, m_num);
 		MoveConstruct(from, to);
 		m_data = new_data;
 		m_max = new_size;

@@ -7,8 +7,11 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace mu_core_tests
 {
+	using namespace mu;
+
 	TEST_CLASS(PointerRangeTests)
 	{
+
 	public:
 		TEST_METHOD(Size)
 		{
@@ -32,6 +35,40 @@ namespace mu_core_tests
 				Assert::IsTrue(r.HasSize, nullptr, LINE_INFO());
 				Assert::AreEqual(size, r.Size(), nullptr, LINE_INFO());
 			}
+		}
+
+		TEST_METHOD(Reading)
+		{
+			int arr[] = { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18 };
+			auto r = Range(arr);
+			
+			Assert::IsTrue(std::is_same_v<int&, decltype(r.Front())>);
+			int i = 0;
+			for (; !r.IsEmpty(); r.Advance(), ++i)
+			{
+				Assert::AreEqual(i * 2, r.Front());
+			}
+		}
+
+		TEST_METHOD(Writing)
+		{
+			int arr[] = { 0, 1, 2, 3 };
+			auto r = Range(arr);
+
+			for (; !r.IsEmpty(); r.Advance())
+			{
+				int old = r.Front();
+				r.Front() = r.Front() * 2;
+				Assert::AreEqual(old * 2, r.Front());
+			}
+		}
+
+		TEST_METHOD(ConstRange)
+		{
+			const int arr[] = { 0, 1, 2, 3, 4 };
+			auto r = Range(arr);
+
+			Assert::IsTrue(std::is_same_v<const int&, decltype(r.Front())>);
 		}
 
 		TEST_METHOD(MovePrimitive)
