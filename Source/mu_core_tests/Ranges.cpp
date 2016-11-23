@@ -13,15 +13,21 @@ namespace mu_core_tests
 		TEST_METHOD(Size)
 		{
 			const size_t size = 100;
-			std::unique_ptr<int[]> ptr{ new int[size] };
+			int ptr[size] = {};
 			{
-				auto r = Range(ptr.get(), size);
+				auto r = Range(ptr, size);
 
 				Assert::IsTrue(r.HasSize, nullptr, LINE_INFO());
 				Assert::AreEqual(size, r.Size(), nullptr, LINE_INFO());
 			}
 			{
-				auto r = Range(ptr.get(), ptr.get() + size);
+				auto r = Range(ptr, ptr + size);
+
+				Assert::IsTrue(r.HasSize, nullptr, LINE_INFO());
+				Assert::AreEqual(size, r.Size(), nullptr, LINE_INFO());
+			}
+			{
+				auto r = Range(ptr);
 
 				Assert::IsTrue(r.HasSize, nullptr, LINE_INFO());
 				Assert::AreEqual(size, r.Size(), nullptr, LINE_INFO());
@@ -33,8 +39,8 @@ namespace mu_core_tests
 			int from[] = { 0,1,2,3,4,5,6,7,8,9 };
 			int to[20] = {};
 
-			auto source = Range(from, from + sizeof(from)/sizeof(from[0]));
-			auto dest = Range(to, to + sizeof(to) / sizeof(to[0]));
+			auto source = Range(from);
+			auto dest = Range(to);
 			Assert::AreEqual(size_t(10), source.Size(), nullptr, LINE_INFO());
 			Assert::AreEqual(size_t(20), dest.Size(), nullptr, LINE_INFO());
 
@@ -47,7 +53,7 @@ namespace mu_core_tests
 			Assert::IsTrue(dest3.IsEmpty(), nullptr, LINE_INFO());
 			
 			int index = 0;
-			for (auto r = Range(to, 20); !r.IsEmpty(); r.Advance(), ++index)
+			for (auto r = Range(to); !r.IsEmpty(); r.Advance(), ++index)
 			{
 				Assert::AreEqual(from[index % 10], r.Front(), nullptr, LINE_INFO());
 			}
@@ -59,7 +65,7 @@ namespace mu_core_tests
 			float bs[] = { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
 
 			int index = 0;
-			auto r = Zip(Range(as, 10), Range(bs, 10));
+			auto r = Zip(Range(as), Range(bs));
 			Assert::IsTrue(r.HasSize, nullptr, LINE_INFO());
 			Assert::IsFalse(r.IsEmpty(), nullptr, LINE_INFO());
 			Assert::AreEqual(size_t(10), r.Size(), nullptr, LINE_INFO());
@@ -98,7 +104,7 @@ namespace mu_core_tests
 		TEST_METHOD(ZipIotaWithFinite)
 		{
 			float fs[] = { 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 };
-			auto frange = Range(fs, sizeof(fs) / sizeof(fs[0]));
+			auto frange = Range(fs);
 			auto r = Zip(Iota(), frange);
 
 			Assert::IsTrue(r.HasSize);
