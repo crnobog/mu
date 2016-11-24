@@ -192,4 +192,49 @@ namespace mu_core_tests_algorithms
 			Assert::IsTrue(Range(arr) == initial);
 		}
 	};
+
+	TEST_CLASS(FindTests)
+	{
+	public:
+		TEST_METHOD(ReturnsNonEmptyIterator)
+		{
+			int arr[] = { 10, 20, 100, 50, 40, 6, 100, 120, 50 };
+			auto r= Find(Range(arr), [](int a) { return a < 10; });
+
+			Assert::IsFalse(r.IsEmpty());
+		}
+
+		TEST_METHOD(ReturnsEmptyIterator)
+		{
+			int arr[] = { 10, 20, 100, 50, 40, 100, 120, 50 };
+			auto r = Find(Range(arr), [](int a) { return a < 10; });
+
+			Assert::IsTrue(r.IsEmpty());
+		}
+
+		TEST_METHOD(IteratorMatchesManualAdvance)
+		{
+			int arr[] = { 10, 20, 100, 50, 40, 100, 120, 50 };
+			auto found = Find(Range(arr), [](int a) { return a == 100; });
+
+			auto r = Range(arr);
+			r.Advance(); r.Advance();
+			Assert::IsTrue(r == found);
+		}
+		
+		TEST_METHOD(SucessiveFinds)
+		{
+			int arr[] = { 10, 20, 100, 50, 40, 100, 120, 50 };
+			auto found = Find(Range(arr), [](int a) { return a == 100; });
+
+			auto first = found;
+			found.Advance();
+			auto second = Find(found, [](int a) { return a == 100;  });
+
+			Assert::IsTrue(first != second);
+
+			auto also_second = FindNext(first, [](int a) { return a == 100;  });
+			Assert::IsTrue(second == also_second);
+		}
+	};
 }

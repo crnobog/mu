@@ -38,4 +38,38 @@ namespace mu
 			f(r.Front());
 		}
 	}
+
+	template<typename RANGE, typename FUNC>
+	auto Find(RANGE&& in_r, FUNC&& f)
+	{
+		typedef std::decay<RANGE>::type RANGE_TYPE;
+		RANGE_TYPE r{ std::forward<RANGE_TYPE>(in_r) };
+		for (; !r.IsEmpty(); r.Advance())
+		{
+			if (f(r.Front()))
+			{
+				return r;
+			}
+		}
+		return r;
+	}
+
+	template<typename RANGE, typename FUNC>
+	auto FindNext(RANGE&& in_r, FUNC&& f)
+	{
+		typedef std::decay<RANGE>::type RANGE_TYPE;
+
+		if (in_r.IsEmpty()) { return in_r; }
+
+		RANGE_TYPE r{ std::forward<RANGE_TYPE>(in_r) };
+		r.Advance(); // Skip the last found value
+		for (; !r.IsEmpty(); r.Advance())
+		{
+			if (f(r.Front()))
+			{
+				return r;
+			}
+		}
+		return r;
+	}
 }
