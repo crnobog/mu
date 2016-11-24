@@ -3,7 +3,7 @@
 #include <tuple>
 #include <limits>
 
-#include "Metaprogramming.h"
+#include "Functors.h"
 
 // Prototype of a forward range:
 //	template<typename T>
@@ -19,7 +19,6 @@
 
 namespace mu
 {
-
 	// Functions to automatically construct ranges from pointers/arrays
 	template<typename T>
 	auto Range(T* ptr, size_t num)
@@ -30,7 +29,7 @@ namespace mu
 	template<typename T>
 	auto Range(T* start, T* end)
 	{
-		return PointerRange<T>(start, end);
+		return ranges::PointerRange<T>(start, end);
 	}
 
 	template<typename T, size_t SIZE>
@@ -38,146 +37,136 @@ namespace mu
 	{
 		return Range(arr, arr + SIZE);
 	}
-
-	// A linear forward range over raw memory of a certain type
-	template<typename T>
-	class PointerRange
-	{
-		T* m_start, *m_end;
-	public:
-		enum { HasSize = 1 };
-
-		PointerRange(T* start, T* end)
-			: m_start(start)
-			, m_end(end)
-		{}
-
-		void Advance()
-		{
-			++m_start;
-		}
-
-		bool IsEmpty() const { return m_start >= m_end; }
-		T& Front() { return *m_start; }
-		size_t Size() const { return m_end - m_start; }
-	};
-
-	// Move assign elements from the source to the destination
-	template<typename DEST_RANGE, typename SOURCE_RANGE>
-	auto Move(DEST_RANGE dest, SOURCE_RANGE source)
-	{
-		for (; !dest.IsEmpty() && !source.IsEmpty(); dest.Advance(), source.Advance())
-		{
-			dest.Front() = std::move(source.Front());
-		}
-		return dest;
-	}
-
-	// Move CONSTRUCT elements from the source into the destination.
-	// Assumes the destination is uninitialized or otherwise does not 
-	//	require destructors/assignment operators to be called.
-	template<typename DEST_RANGE, typename SOURCE_RANGE>
-	auto MoveConstruct(DEST_RANGE dest, SOURCE_RANGE source)
-	{
-		typedef std::remove_reference<decltype(dest.Front())>::type ELEMENT_TYPE;
-		for (; !dest.IsEmpty() && !source.IsEmpty(); dest.Advance(), source.Advance())
-		{
-			new(&dest.Front()) ELEMENT_TYPE(std::move(source.Front()));
-		}
-		return dest;
-	}
-
-	template<typename T>
-	class IotaRange
-	{
-		T m_it = 0;
-	public:
-		enum { HasSize = 0 };
-
-		IotaRange() {}
-		IotaRange(T start = 0) : m_it(start)
-		{
-		}
-
-		void Advance() { ++m_it; }
-		bool IsEmpty() const { return false; }
-		T Front() { return m_it; }
-	};
-
-	inline IotaRange<size_t> Iota(size_t start = 0) { return IotaRange<size_t>(start); }
-
-
-	// ZipRange combines multiple ranges and iterates them in lockstep
+	
 	template<typename... RANGES>
-	class ZipRange
+	auto Zip(RANGES... ranges) { return ranges::ZipRange<RANGES...>(ranges...); }
+
+	template<typename T=size_t>
+	inline auto Iota(T start = 0) { return ranges::IotaRange<T>(start); }
+
+	namespace ranges
 	{
-		std::tuple<RANGES...> m_ranges;
+		using mu::functor::Fold;
+		using mu::functor::FoldOr;
+		using mu::functor::FMap;
+		using mu::functor::FMapVoid;
 
-	public:
-		enum { HasSize = meta::FoldOr(RANGES::HasSize...) };
-
-		ZipRange(RANGES... ranges) : m_ranges(ranges...)
+		// A linear forward range over raw memory of a certain type
+		template<typename T>
+		class PointerRange
 		{
-		}
+			T* m_start, *m_end;
+		public:
+			enum { HasSize = 1 };
 
-		bool IsEmpty() const
+			PointerRange(T* start, T* end)
+				: m_start(start)
+				, m_end(end)
+			{}
+
+			void Advance()
+			{
+				++m_start;
+			}
+
+			bool IsEmpty() const { return m_start >= m_end; }
+			T& Front() { return *m_start; }
+			const T& Front() const { return *m_start; }
+			size_t Size() const { return m_end - m_start; }
+		};
+
+		// A linear infinite range over an integral type
+		template<typename T>
+		class IotaRange
 		{
-			return meta::FoldOr(meta::FMap<RangeIsEmpty>(m_ranges));
-		}
+			T m_it = 0;
+		public:
+			enum { HasSize = 0 };
 
-		void Advance()
+			IotaRange() {}
+			IotaRange(T start = 0) : m_it(start)
+			{
+			}
+
+			void Advance() { ++m_it; }
+			bool IsEmpty() const { return false; }
+			T Front() { return m_it; }
+		};
+
+		// ZipRange combines multiple ranges and iterates them in lockstep
+		template<typename... RANGES>
+		class ZipRange
 		{
-			meta::FMapVoid<RangeAdvance>(m_ranges);
-		}
+			std::tuple<RANGES...> m_ranges;
 
-		auto Front()
+		public:
+			static constexpr bool HasSize = FoldOr(RANGES::HasSize...);
+
+			ZipRange(RANGES... ranges) : m_ranges(ranges...)
+			{
+			}
+
+			bool IsEmpty() const
+			{
+				return FoldOr(FMap<details::RangeIsEmpty>(m_ranges));
+			}
+
+			void Advance()
+			{
+				FMapVoid<details::RangeAdvance>(m_ranges);
+			}
+
+			auto Front()
+			{
+				return FMap<details::RangeFront>(m_ranges);
+			}
+
+			template<typename T = ZipRange, typename std::enable_if<T::HasSize, int>::type = 0>
+			size_t Size() const
+			{
+				return Fold<details::RangeMinSizeFolder>(
+					std::numeric_limits<size_t>::max(), m_ranges);
+			}
+		};
+
+		namespace details
 		{
-			return meta::FMap<RangeFront>(m_ranges);
+			// Helpers for calling members in variadic template expansion
+			template<typename RANGE>
+			struct RangeIsEmpty { bool operator()(const RANGE& r) { return r.IsEmpty(); } };
+
+			template<typename RANGE>
+			struct RangeAdvance { void operator()(RANGE& r) { r.Advance(); } };
+
+			template<typename RANGE>
+			struct RangeFront
+			{
+				auto operator()(RANGE& r) -> decltype(r.Front())
+				{
+					return r.Front();
+				}
+			};
+
+			// Functor for folding over ranges of finite/infinite size and picking the minimum size
+			template<typename RANGE>
+			struct RangeMinSizeFolder
+			{
+				template<typename T = RANGE, typename std::enable_if<T::HasSize, int>::type = 0>
+				constexpr size_t operator()(size_t s, const RANGE& r)
+				{
+					size_t rs = r.Size();
+					return rs < s ? rs : s;
+				}
+
+				template<typename T = RANGE, typename std::enable_if<!T::HasSize, int>::type = 0>
+				constexpr size_t operator()(size_t s, const RANGE&)
+				{
+					return s;
+				}
+			};
+
+			template<typename RANGE>
+			using RangeFrontType = decltype(std::declval<RANGE>().Front());
 		}
-
-		template<typename T = ZipRange, typename std::enable_if<T::HasSize, int>::type = 0>
-		size_t Size() const
-		{
-			return meta::Fold<RangeMinSizeFolder>(std::numeric_limits<size_t>::max(), m_ranges);
-		}
-	};
-
-	template<typename... RANGES>
-	auto Zip(RANGES... ranges) { return ZipRange<RANGES...>(ranges...); }
-
-
-
-	// Helpers for calling members in variadic template expansion
-	template<typename RANGE>
-	struct RangeIsEmpty { bool operator()(const RANGE& r) { return r.IsEmpty(); } };
-
-	template<typename RANGE>
-	struct RangeAdvance { void operator()(RANGE& r) { r.Advance(); } };
-
-	template<typename RANGE>
-	struct RangeFront
-	{
-		// TODO: check return type works with const& and value
-		auto operator()(RANGE& r) -> decltype(r.Front())
-		{
-			return r.Front();
-		}
-	};
-
-	template<typename RANGE>
-	struct RangeMinSizeFolder
-	{
-		template<typename T = RANGE, typename std::enable_if<T::HasSize, int>::type = 0>
-		constexpr size_t operator()(size_t s, const RANGE& r)
-		{
-			size_t rs = r.Size();
-			return rs < s ? rs : s;
-		}
-
-		template<typename T = RANGE, typename std::enable_if<!T::HasSize, int>::type = 0>
-		constexpr size_t operator()(size_t s, const RANGE&)
-		{
-			return s;
-		}
-	};
+	}
 }

@@ -141,8 +141,10 @@
     <ClCompile Include="..\Source\mu\VulkanTools.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\Source\mu\Algorithms.h" />
     <ClInclude Include="..\Source\mu\Array.h" />
     <ClInclude Include="..\Source\mu\Debug.h" />
+    <ClInclude Include="..\Source\mu\Functors.h" />
     <ClInclude Include="..\Source\mu\Math.h" />
     <ClInclude Include="..\Source\mu\Metaprogramming.h" />
     <ClInclude Include="..\Source\mu\Ranges.h" />

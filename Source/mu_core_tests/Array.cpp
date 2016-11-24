@@ -3,14 +3,14 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace mu_core_tests
+namespace mu_core_tests_array
 {
-	int ConstructCount = 0;
-	int DestructCount = 0;
-	int CopyCount = 0;
-	int MoveCount = 0;
+	static int ConstructCount = 0;
+	static int DestructCount = 0;
+	static int CopyCount = 0;
+	static int MoveCount = 0;
 
-	void ResetCounts()
+	static void ResetCounts()
 	{
 		ConstructCount = 0;
 		DestructCount = 0;

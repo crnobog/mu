@@ -26,6 +26,12 @@
     <ClInclude Include="..\Source\mu\Metaprogramming.h">
       <Filter>Core</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\mu\Algorithms.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\mu\Functors.h">
+      <Filter>Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">

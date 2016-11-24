@@ -1,11 +1,12 @@
 #include "CppUnitTest.h"
 #include "../mu/Ranges.h"
+#include "../mu/Algorithms.h"
 
 #include <memory>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace mu_core_tests
+namespace mu_core_tests_ranges
 {
 	using namespace mu;
 
@@ -71,30 +72,6 @@ namespace mu_core_tests
 			Assert::IsTrue(std::is_same_v<const int&, decltype(r.Front())>);
 		}
 
-		TEST_METHOD(MovePrimitive)
-		{
-			int from[] = { 0,1,2,3,4,5,6,7,8,9 };
-			int to[20] = {};
-
-			auto source = Range(from);
-			auto dest = Range(to);
-			Assert::AreEqual(size_t(10), source.Size(), nullptr, LINE_INFO());
-			Assert::AreEqual(size_t(20), dest.Size(), nullptr, LINE_INFO());
-
-			auto dest2 = Move(dest, source);
-			Assert::AreEqual(dest.Size() - source.Size(), dest2.Size(), nullptr, LINE_INFO());
-			Assert::AreEqual(size_t(10), source.Size(), nullptr, LINE_INFO());
-
-			auto dest3 = Move(dest2, source);
-			Assert::AreEqual(dest.Size() - source.Size()*2, dest3.Size(), nullptr, LINE_INFO());
-			Assert::IsTrue(dest3.IsEmpty(), nullptr, LINE_INFO());
-			
-			int index = 0;
-			for (auto r = Range(to); !r.IsEmpty(); r.Advance(), ++index)
-			{
-				Assert::AreEqual(from[index % 10], r.Front(), nullptr, LINE_INFO());
-			}
-		}
 
 		TEST_METHOD(ZipRanges)
 		{
@@ -154,6 +131,15 @@ namespace mu_core_tests
 				Assert::AreEqual(size_t(i), std::get<0>(f));
 				Assert::AreEqual(fs[i], std::get<1>(f));
 			}
+		}
+
+		TEST_METHOD(ZipConstMutable)
+		{
+			int a[] = { 1,2,3,4 };
+			const int b[] = { 5, 6, 7, 8 };
+
+			auto r = Zip(Range(a), Range(b));
+			Assert::IsTrue(std::is_same_v<std::tuple<int&, const int&>, decltype(r.Front())>);
 		}
 	};
 }

@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "Ranges.h"
+#include "Algorithms.h"
 
 template<typename T>
 class ArrayView;
@@ -40,9 +41,9 @@ public:
 
 	Array(const Array& other)
 	{
-		InitSize(other.m_num);
 		for (auto&& item : other)
 		{
+		InitSize(other.m_num);
 			Add(item);
 		}
 	}
@@ -52,6 +53,18 @@ public:
 		std::swap(m_data, other.m_data);
 		std::swap(m_num, other.m_num);
 		std::swap(m_max, other.m_max);
+	}
+
+	Array& operator=(const Array& other)
+	{
+		// TODO
+		return *this;
+	}
+
+	Array& operator=(Array&& other)
+	{
+		// TODO
+		return *this;
 	}
 
 	~Array()
@@ -101,7 +114,7 @@ private:
 		T* new_data = (T*)malloc(sizeof(T) * new_size);
 		auto from = mu::Range(m_data, m_num);
 		auto to = mu::Range(new_data, m_num);
-		MoveConstruct(from, to);
+		mu::MoveConstruct(from, to);
 		m_data = new_data;
 		m_max = new_size;
 	}

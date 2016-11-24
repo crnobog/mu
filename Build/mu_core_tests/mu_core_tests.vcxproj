@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Source\mu_core_tests\Algorithms.cpp" />
     <ClCompile Include="..\..\Source\mu_core_tests\Array.cpp" />
     <ClCompile Include="..\..\Source\mu_core_tests\Ranges.cpp" />
   </ItemGroup>
