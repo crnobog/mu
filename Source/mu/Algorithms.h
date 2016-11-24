@@ -27,4 +27,13 @@ namespace mu
 		}
 		return dest;
 	}
+
+	template<typename RANGE, typename FUNC>
+	auto Map(RANGE&& r, FUNC&& f)
+	{
+		for (; !r.IsEmpty(); r.Advance())
+		{
+			r.Front() = f(r.Front());
+		}
+	}
 }

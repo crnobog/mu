@@ -142,4 +142,34 @@ namespace mu_core_tests_ranges
 			Assert::IsTrue(std::is_same_v<std::tuple<int&, const int&>, decltype(r.Front())>);
 		}
 	};
+
+	TEST_CLASS(TransformRangeTests)
+	{
+	public:
+		TEST_METHOD(TransformLambda)
+		{
+			int arr[] = { 1, 2, 3, 4, 5 };
+			auto r = Transform(Range(arr), [](int a) { return a * 5; });
+
+			Assert::IsTrue(r.HasSize);
+			Assert::AreEqual(size_t(5), r.Size());
+			
+			for (int i = 0; !r.IsEmpty(); ++i, r.Advance())
+			{
+				Assert::AreEqual(arr[i] * 5, r.Front());
+			}
+		}
+
+		TEST_METHOD(TransformInfinite)
+		{
+			auto r = Transform(Iota<int>(), [](int a) { return a * 5; });
+
+			Assert::IsFalse(r.HasSize);
+
+			for (int i = 0; i < 10; ++i, r.Advance())
+			{
+				Assert::AreEqual(i * 5, r.Front());
+			}
+		}
+	};
 }

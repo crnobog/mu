@@ -44,6 +44,14 @@ namespace mu
 	template<typename T=size_t>
 	inline auto Iota(T start = 0) { return ranges::IotaRange<T>(start); }
 
+	template<typename IN_RANGE, typename FUNC>
+	auto Transform(IN_RANGE&& r, FUNC&& f)
+	{
+		return ranges::TransformRange<IN_RANGE, FUNC>(
+			std::forward<std::decay<IN_RANGE>::type>(r),
+			std::forward<std::decay<FUNC>::type>(f));
+	}
+
 	namespace ranges
 	{
 		using mu::functor::Fold;
@@ -127,6 +135,27 @@ namespace mu
 				return Fold<details::RangeMinSizeFolder>(
 					std::numeric_limits<size_t>::max(), m_ranges);
 			}
+		};
+
+		template<typename IN_RANGE, typename FUNC>
+		class TransformRange
+		{
+			IN_RANGE m_range;
+			FUNC m_func;
+		public:
+			static constexpr bool HasSize = IN_RANGE::HasSize;
+
+			TransformRange(IN_RANGE r, FUNC f) 
+				: m_range(r), m_func(f)
+			{
+			}
+
+			bool IsEmpty() const { return m_range.IsEmpty(); }
+			auto Front() { return m_func(m_range.Front()); }
+			void Advance() { m_range.Advance(); }
+
+			template<typename T=IN_RANGE, typename = std::enable_if_t<T::HasSize>>
+			size_t Size() const { return m_range.Size(); }
 		};
 
 		namespace details

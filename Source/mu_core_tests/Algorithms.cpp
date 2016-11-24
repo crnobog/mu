@@ -10,60 +10,60 @@ namespace mu_core_tests_algorithms
 {
 	using namespace mu;
 
-	static int ConstructCount = 0;
-	static int DestructCount = 0;
-	static int CopyCount = 0;
-	static int MoveCount = 0;
-	static int CopyAssignCount = 0;
-	static int MoveAssignCount = 0;
-
-	static void ResetCounts()
-	{
-		ConstructCount = 0;
-		DestructCount = 0;
-		CopyCount = 0;
-		MoveCount = 0;
-		CopyAssignCount = 0;
-		MoveAssignCount = 0;
-	}
-
-	struct Element
-	{
-		int32_t data;
-
-		Element() : data(0)
-		{
-			++ConstructCount;
-		}
-		Element(int32_t d) : data(d)
-		{
-			++ConstructCount;
-		}
-		Element(const Element& other) : data(other.data)
-		{
-			++CopyCount;
-		}
-		Element(Element&& other) : data(other.data)
-		{
-			++MoveCount;
-		}
-		Element& operator=(const Element& other)
-		{
-			++CopyAssignCount;
-			return *this;
-		}
-		Element& operator=(Element&& other)
-		{
-			++MoveAssignCount;
-			return *this;
-		}
-		~Element()
-		{
-			++DestructCount;
-		}
-	};
 	TEST_CLASS(MoveTests)
 	{
+		static int ConstructCount;
+		static int DestructCount;
+		static int CopyCount;
+		static int MoveCount;
+		static int CopyAssignCount;
+		static int MoveAssignCount;
+
+		static void ResetCounts()
+		{
+			ConstructCount = 0;
+			DestructCount = 0;
+			CopyCount = 0;
+			MoveCount = 0;
+			CopyAssignCount = 0;
+			MoveAssignCount = 0;
+		}
+
+		struct Element
+		{
+			int32_t data;
+
+			Element() : data(0)
+			{
+				++ConstructCount;
+			}
+			Element(int32_t d) : data(d)
+			{
+				++ConstructCount;
+			}
+			Element(const Element& other) : data(other.data)
+			{
+				++CopyCount;
+			}
+			Element(Element&& other) : data(other.data)
+			{
+				++MoveCount;
+			}
+			Element& operator=(const Element& other)
+			{
+				++CopyAssignCount;
+				return *this;
+			}
+			Element& operator=(Element&& other)
+			{
+				++MoveAssignCount;
+				return *this;
+			}
+			~Element()
+			{
+				++DestructCount;
+			}
+		};
 	public:
 		TEST_METHOD_INITIALIZE(MethodInit)
 		{
@@ -144,6 +144,33 @@ namespace mu_core_tests_algorithms
 			Assert::AreEqual(0, MoveAssignCount);
 			Assert::AreEqual(10, MoveCount);
 			Assert::AreEqual(0, DestructCount);
+		}
+	};
+
+	int MoveTests::ConstructCount;
+	int MoveTests::DestructCount;
+	int MoveTests::CopyCount;
+	int MoveTests::MoveCount;
+	int MoveTests::CopyAssignCount;
+	int MoveTests::MoveAssignCount;
+
+	TEST_CLASS(MapTests)
+	{
+	public:
+		TEST_METHOD_INITIALIZE(MethodInit)
+		{
+		}
+
+		TEST_METHOD(MapLambda)
+		{
+			int arr[] = { 1,2,3,4 };
+			int expected[] = { 2,4,6,8 };
+			Map(Range(arr), [](int a) { return a * 2; });
+
+			for (auto r = Range(arr), x = Range(expected); !r.IsEmpty(); r.Advance(), x.Advance())
+			{
+				Assert::AreEqual(x.Front(), r.Front());
+			}
 		}
 	};
 }
