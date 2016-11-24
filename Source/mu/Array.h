@@ -41,9 +41,9 @@ public:
 
 	Array(const Array& other)
 	{
+		InitSize(other.m_num);
 		for (auto&& item : other)
 		{
-		InitSize(other.m_num);
 			Add(item);
 		}
 	}
