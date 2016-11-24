@@ -92,14 +92,20 @@ namespace mu_core_tests_array
 			{
 				Assert::AreEqual(1, ConstructCount, nullptr, LINE_INFO());
 				Assert::AreEqual(0, CopyCount, nullptr, LINE_INFO());
+				Assert::AreEqual(0, MoveCount, nullptr, LINE_INFO());
 
+				ResetCounts();
 				Array<Element> arr;
+				arr.Reserve(10);
 				Assert::AreEqual((size_t)0, arr.Add(e), nullptr, LINE_INFO());
-				Assert::AreEqual(1, ConstructCount, nullptr, LINE_INFO());
+				Assert::AreEqual(0, ConstructCount, nullptr, LINE_INFO());
 				Assert::AreEqual(1, CopyCount, nullptr, LINE_INFO());
+				Assert::AreEqual(0, MoveCount, nullptr, LINE_INFO());
 
+				ResetCounts();
 				Assert::AreEqual((size_t)1, arr.Add(Element()), nullptr, LINE_INFO());
-				Assert::AreEqual(2, ConstructCount, nullptr, LINE_INFO());
+				Assert::AreEqual(1, ConstructCount, nullptr, LINE_INFO());
+				Assert::AreEqual(0, CopyCount, nullptr, LINE_INFO());
 				Assert::AreEqual(1, MoveCount, nullptr, LINE_INFO());
 
 				Assert::AreEqual((size_t)2, arr.Num(), nullptr, LINE_INFO());
