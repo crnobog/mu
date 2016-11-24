@@ -17,6 +17,9 @@
 //		size_t Size(); // if HasSize == 1
 //	};
 
+template<typename T>
+class Array;
+
 namespace mu
 {
 	// Functions to automatically construct ranges from pointers/arrays
@@ -36,6 +39,12 @@ namespace mu
 	auto Range(T(&arr)[SIZE])
 	{
 		return Range(arr, arr + SIZE);
+	}
+
+	template<typename T>
+	auto Range(Array<T>& arr)
+	{
+		return Range(arr.Data(), arr.Num());
 	}
 	
 	template<typename... RANGES>
