@@ -50,20 +50,26 @@ public:
 
 	Array(Array&& other)
 	{
-		std::swap(m_data, other.m_data);
-		std::swap(m_num, other.m_num);
-		std::swap(m_max, other.m_max);
+		*this = std::forward<Array>(other);
 	}
 
 	Array& operator=(const Array& other)
 	{
-		// TODO
+		InitEmpty(other.Num());
+		for (const auto& item : other)
+		{
+			Add(item);
+		}
 		return *this;
 	}
 
 	Array& operator=(Array&& other)
 	{
-		// TODO
+		this->~Array();
+
+		std::swap(m_data, other.m_data);
+		std::swap(m_num, other.m_num);
+		std::swap(m_max, other.m_max);
 		return *this;
 	}
 
@@ -233,4 +239,3 @@ private:
 		}
 	}
 };
-
