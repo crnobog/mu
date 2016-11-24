@@ -52,6 +52,29 @@ namespace mu
 			std::forward<std::decay<FUNC>::type>(f));
 	}
 
+	template<typename RANGE>
+	auto MakeRangeIterator(RANGE&& r)
+	{
+		return RangeIterator<std::decay<RANGE>::type>(r);
+	}
+	
+	// Adaptor for using ranges in begin-end based range-based for loops
+	template<typename RANGE>
+	struct RangeIterator
+	{
+		RANGE m_range;
+		
+		struct End {};
+
+		RangeIterator(RANGE r) : m_range(std::move(r))
+		{
+		}
+
+		void operator++() { m_range.Advance(); }
+		auto operator*() { return m_range.Front(); }
+		bool operator!=(End) { return !m_range.IsEmpty(); }
+	};
+
 	namespace ranges
 	{
 		using mu::functor::Fold;
