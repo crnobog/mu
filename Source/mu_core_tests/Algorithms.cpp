@@ -172,5 +172,14 @@ namespace mu_core_tests_algorithms
 				Assert::AreEqual(x.Front(), r.Front());
 			}
 		}
+
+		TEST_METHOD(MapLambdaConst)
+		{
+			int sum = 0;
+			int arr[] = { 5, 10, 20 };
+			Map(Range(arr), [&](const int&a) {sum += a; });
+
+			Assert::AreEqual(35, sum);
+		}
 	};
 }
