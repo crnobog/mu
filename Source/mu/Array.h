@@ -111,6 +111,35 @@ public:
 		return AddSafe(std::forward<T>(item));
 	}
 
+	void AddUnique(const T& item)
+	{
+		if (!Contains(item))
+		{
+			Add(item);
+		}
+	}
+
+	void AddUnique(T&& item)
+	{
+		if (!Contains(item))
+		{
+			Add(std::forward<T>(item));
+		}
+	}
+
+	template<typename U>
+	void AddManyUnique(U&& u)
+	{
+		AddUnique(std::forward<U>(u));
+	}
+
+	template<typename U, typename... US>
+	void AddManyUnique(U&& u, US&&... us)
+	{
+		AddUnique(std::forward<U>(u));
+		AddManyUnique(std::forward<US>(us)...);
+	}
+
 	size_t Emplace(T&& item)
 	{
 		EnsureSpace(m_num + 1);
