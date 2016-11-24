@@ -3,9 +3,10 @@
 #include <glfw/glfw3.h>
 #include <cstdint>
 #include <memory>
-#include <vector>
-#include <algorithm>
 
+#include "Array.h"
+#include "Ranges.h"
+#include "Algorithms.h"
 #include "Debug.h"
 #include "Scope.h"
 #include "VulkanTools.h"
@@ -28,17 +29,17 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 
 void CreateVulkanInstance(mu::vk::Instance& out_instance)
 {
-	std::vector<const char*> instance_extensions;
+	Array<const char*> instance_extensions;
 	{
 		uint32_t count = 0;
 		const char** extensions = glfwGetRequiredInstanceExtensions(&count);
 
 		for (size_t i : mu::Indices(count))
 		{
-			instance_extensions.emplace_back(extensions[i]);
+			instance_extensions.Emplace(extensions[i]);
 		}
 
-		instance_extensions.emplace_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+		instance_extensions.Emplace(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 	}
 
 	auto app_info = VkApplicationInfo{
@@ -48,15 +49,15 @@ void CreateVulkanInstance(mu::vk::Instance& out_instance)
 		VK_API_VERSION_1_0
 	};
 
-	std::vector<const char*> layers = { "VK_LAYER_LUNARG_standard_validation" };
+	Array<const char*> layers = { "VK_LAYER_LUNARG_standard_validation" };
 
 
 	auto instance_create_info = VkInstanceCreateInfo{
 		VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO, nullptr,
 		0,
 		&app_info,
-		(uint32_t)layers.size(), layers.data(),
-		(uint32_t)instance_extensions.size(), instance_extensions.data()
+		(uint32_t)layers.Num(), layers.Data(),
+		(uint32_t)instance_extensions.Num(), instance_extensions.Data()
 	};
 
 	if (vkCreateInstance(&instance_create_info, nullptr, out_instance.Replace()) != VK_SUCCESS)
@@ -97,36 +98,35 @@ struct PhysicalDeviceSelection
 };
 
 PhysicalDeviceSelection SelectPhysicalDevice(
-	const std::vector<const char*>& required_extensions,
+	const Array<const char*>& required_extensions,
 	VkInstance instance, 
 	VkSurfaceKHR surface)
 {
-	std::vector<VkPhysicalDevice> devices = mu::vk::EnumeratePhysicalDevices(instance);
+	Array<VkPhysicalDevice> devices = mu::vk::EnumeratePhysicalDevices(instance);
 
 	for (VkPhysicalDevice device : devices)
 	{		
 		{
-			std::vector<VkExtensionProperties> available_extensions = mu::vk::EnumerateDeviceExtensionProperties(device);
+			Array<VkExtensionProperties> available_extensions = mu::vk::EnumerateDeviceExtensionProperties(device);
 			bool all_found = true;
-			auto b = available_extensions.begin(), e = available_extensions.end();
 			for (const char* needed_ext : required_extensions)
 			{
-				all_found = all_found && e !=
-					std::find_if(b, e, [needed_ext](const VkExtensionProperties& ext) { return strcmp(ext.extensionName, needed_ext) == 0; });
+				auto f = mu::Find(mu::Range(available_extensions), [needed_ext](const VkExtensionProperties& ext) { return strcmp(ext.extensionName, needed_ext) == 0; });
+				all_found = all_found && !f.IsEmpty();
 			}
 
 			if (!all_found) { continue; }
 		}
 
 		mu::vk::SwapChainSupport swap_chain = mu::vk::QuerySwapChainSupport(device, surface);
-		if (swap_chain.surface_formats.empty() || swap_chain.present_modes.empty())
+		if (swap_chain.surface_formats.IsEmpty() || swap_chain.present_modes.IsEmpty())
 		{
 			continue;
 		}
 
-		std::vector<VkQueueFamilyProperties> queue_props = mu::vk::GetPhysicalDeviceQueueFamilyProperties(device);
+		Array<VkQueueFamilyProperties> queue_props = mu::vk::GetPhysicalDeviceQueueFamilyProperties(device);
 		int32_t graphics_index = -1, present_index = -1;
-		for (int32_t i = 0; i < queue_props.size(); ++i)
+		for (int32_t i = 0; i < queue_props.Num(); ++i)
 		{
 			if (queue_props[i].queueCount > 0)
 			{
@@ -158,11 +158,11 @@ PhysicalDeviceSelection SelectPhysicalDevice(
 	throw std::runtime_error("No device available");
 }
 
-VkSurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& surface_formats)
+VkSurfaceFormatKHR ChooseSurfaceFormat(const Array<VkSurfaceFormatKHR>& surface_formats)
 {
-	if (surface_formats.size() == 0) throw std::runtime_error("No device formats available");
+	if (surface_formats.Num() == 0) throw std::runtime_error("No device formats available");
 
-	if (surface_formats.size() == 1 && surface_formats[0].format == VK_FORMAT_UNDEFINED)
+	if (surface_formats.Num() == 1 && surface_formats[0].format == VK_FORMAT_UNDEFINED)
 	{
 		return{ VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
 	}
@@ -177,7 +177,7 @@ VkSurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& su
 	return surface_formats[0];
 }
 
-VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR>& present_modes)
+VkPresentModeKHR ChoosePresentMode(const Array<VkPresentModeKHR>& present_modes)
 {
 	for (const auto& mode : present_modes)
 	{
@@ -201,7 +201,7 @@ VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& surface_caps, uint32
 
 void CreateDevice(
 	PhysicalDeviceSelection selected_device,
-	const std::vector<const char*>& device_extensions,
+	const Array<const char*>& device_extensions,
 	GLFWwindow* window,
 	VkInstance instance,
 	VkSurfaceKHR surface,
@@ -215,12 +215,11 @@ void CreateDevice(
 	ChooseSurfaceFormat(swap_chain_support.surface_formats);
 
 	float priority = 1.0f;
-	std::vector<uint32_t> queue_families = { selected_device.m_graphics_queue_family, selected_device.m_present_queue_family };
-	queue_families.erase(std::unique(queue_families.begin(), queue_families.end()), queue_families.end());
-	std::vector<VkDeviceQueueCreateInfo> queue_create_info;
+	auto queue_families = Array<uint32_t>::MakeUnique( selected_device.m_graphics_queue_family, selected_device.m_present_queue_family );
+	Array<VkDeviceQueueCreateInfo> queue_create_info;
 	for (uint32_t index : queue_families)
 	{
-		queue_create_info.push_back({
+		queue_create_info.Add({
 			VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
 			nullptr,
 			0,
@@ -234,9 +233,9 @@ void CreateDevice(
 		VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
 		nullptr,
 		0,
-		(uint32_t)queue_create_info.size(), queue_create_info.data(),
+		(uint32_t)queue_create_info.Num(), queue_create_info.Data(),
 		0, nullptr,
-		(uint32_t)device_extensions.size(), device_extensions.data(),
+		(uint32_t)device_extensions.Num(), device_extensions.Data(),
 		&device_features
 	};
 	if (vkCreateDevice(selected_device.m_device, &device_create_info, nullptr, out_device.Replace()) != VK_SUCCESS)
@@ -250,8 +249,8 @@ void CreateDevice(
 struct Swapchain
 {
 	mu::vk::SwapchainKHR handle;
-	std::vector<VkImage> images;
-	std::vector<mu::vk::ImageView> image_views;
+	Array<VkImage> images;
+	Array<mu::vk::ImageView> image_views;
 	VkFormat image_format;
 	VkExtent2D extent;
 };
@@ -275,10 +274,11 @@ Swapchain CreateSwapChain(
 	{
 		image_count = Min(image_count, swap_chain_support.capabilities.maxImageCount);
 	}
-	std::vector<uint32_t> queue_family_indices{ device_selection.m_graphics_queue_family, device_selection.m_present_queue_family };
-	queue_family_indices.erase(std::unique(queue_family_indices.begin(), queue_family_indices.end()), queue_family_indices.end());
+	Array<uint32_t> queue_family_indices{ device_selection.m_graphics_queue_family, device_selection.m_present_queue_family };
+	// TODO:
+	//queue_family_indices.erase(std::unique(queue_family_indices.begin(), queue_family_indices.end()), queue_family_indices.end());
 
-	VkSharingMode sharing_mode = queue_family_indices.size() == 1 ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
+	VkSharingMode sharing_mode = queue_family_indices.Num() == 1 ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
 
 	VkSwapchainCreateInfoKHR swapchain_create_info = {
 		VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
@@ -292,7 +292,7 @@ Swapchain CreateSwapChain(
 		1, // imageArrayLayers
 		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, // imageUsage
 		sharing_mode, // imageSharingMode
-		(uint32_t)queue_family_indices.size(), queue_family_indices.data(), // queueFamilyIndexCount, pQueueFamilyIndices
+		(uint32_t)queue_family_indices.Num(), queue_family_indices.Data(), // queueFamilyIndexCount, pQueueFamilyIndices
 		swap_chain_support.capabilities.currentTransform, // preTransform
 		VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, // compositeAlpha
 		present_mode, // presentMode
@@ -304,8 +304,8 @@ Swapchain CreateSwapChain(
 	{
 		throw std::runtime_error("Failed to create swap chain");
 	}
-	std::vector<VkImage> images = mu::vk::GetSwapchainImagesKHR(device, out_swapchain);
-	std::vector<mu::vk::ImageView> image_views;
+	Array<VkImage> images = mu::vk::GetSwapchainImagesKHR(device, out_swapchain);
+	Array<mu::vk::ImageView> image_views;
 	for (VkImage image : images)
 	{
 		VkImageViewCreateInfo image_view_create_info{
@@ -319,7 +319,7 @@ Swapchain CreateSwapChain(
 		};
 		mu::vk::ImageView view{ device, nullptr };
 		vkCreateImageView(device, &image_view_create_info, nullptr, view.Replace());
-		image_views.emplace_back(std::move(view));
+		image_views.Add(std::move(view));
 	}
 
 	return{ std::move(out_swapchain), std::move(images), std::move(image_views), surface_format.format, extent };
@@ -371,7 +371,7 @@ int main(int, char**)
 			throw std::runtime_error("Failed to create surface");
 		}
 
-		std::vector<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+		Array<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 		PhysicalDeviceSelection selected_device = SelectPhysicalDevice(device_extensions, instance, surface);
 		CreateDevice(selected_device, device_extensions, window, instance, surface, debug_callbacks, device, graphics_queue, present_queue);
 		swapchain = CreateSwapChain(window, selected_device, device, surface);		

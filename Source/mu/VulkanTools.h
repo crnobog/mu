@@ -2,7 +2,8 @@
 
 #include <vulkan/vulkan.h>
 #include <tuple>
-#include <vector>
+
+#include "Array.h"
 
 namespace mu
 {
@@ -165,7 +166,7 @@ namespace mu
 		// special
 		using Instance					= VkHandle<VkInstance,					deleters::Instance,					VkAllocationCallbacks*>;
 		using Device					= VkHandle<VkDevice,					deleters::Device,					VkAllocationCallbacks*>;
-		using DebugReportCallbackEXT = VkHandle<VkDebugReportCallbackEXT, deleters::DebugReportCallbackEXT, PFN_vkDestroyDebugReportCallbackEXT, VkInstance, VkAllocationCallbacks*>;
+		using DebugReportCallbackEXT	= VkHandle<VkDebugReportCallbackEXT,	deleters::DebugReportCallbackEXT,	PFN_vkDestroyDebugReportCallbackEXT, VkInstance, VkAllocationCallbacks*>;
 
 		// instance-deleted
 		using SurfaceKHR				= VkHandle<VkSurfaceKHR,				deleters::SurfaceKHR,				VkInstance, VkAllocationCallbacks*>;
@@ -174,20 +175,20 @@ namespace mu
 		using SwapchainKHR				= VkHandle<VkSwapchainKHR,				deleters::SwapchainKHR,				VkDevice, VkAllocationCallbacks*>;
 		using ImageView					= VkHandle<VkImageView,					deleters::ImageView,				VkDevice, VkAllocationCallbacks*>;
 
-		std::vector<VkLayerProperties>			EnumerateInstanceLayerProperties();
-		std::vector<VkExtensionProperties>		EnumerateInstanceExtensionProperties(const char* layer_name);
-		std::vector<VkExtensionProperties>		EnumerateDeviceExtensionProperties(VkPhysicalDevice device);
-		std::vector<VkPhysicalDevice>			EnumeratePhysicalDevices(VkInstance instance);
-		std::vector<VkQueueFamilyProperties>	GetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice device);
-		std::vector<VkSurfaceFormatKHR>			GetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice device, VkSurfaceKHR surface);
-		std::vector<VkPresentModeKHR>			GetPhysicalDeviceSurfacePresentModesKHR(VkPhysicalDevice device, VkSurfaceKHR surface);
-		std::vector<VkImage>					GetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swap_chain);
+		Array<VkLayerProperties>		EnumerateInstanceLayerProperties();
+		Array<VkExtensionProperties>	EnumerateInstanceExtensionProperties(const char* layer_name);
+		Array<VkExtensionProperties>	EnumerateDeviceExtensionProperties(VkPhysicalDevice device);
+		Array<VkPhysicalDevice>			EnumeratePhysicalDevices(VkInstance instance);
+		Array<VkQueueFamilyProperties>	GetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice device);
+		Array<VkSurfaceFormatKHR>		GetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice device, VkSurfaceKHR surface);
+		Array<VkPresentModeKHR>			GetPhysicalDeviceSurfacePresentModesKHR(VkPhysicalDevice device, VkSurfaceKHR surface);
+		Array<VkImage>					GetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swap_chain);
 
 		struct SwapChainSupport
 		{
-			VkSurfaceCapabilitiesKHR		capabilities;
-			std::vector<VkSurfaceFormatKHR> surface_formats;
-			std::vector<VkPresentModeKHR>	present_modes;
+			VkSurfaceCapabilitiesKHR	capabilities;
+			Array<VkSurfaceFormatKHR>	surface_formats;
+			Array<VkPresentModeKHR>		present_modes;
 		};
 		SwapChainSupport QuerySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
 		
