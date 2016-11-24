@@ -73,6 +73,23 @@ public:
 		if (m_data) { free(m_data); }
 	}
 
+	void Reserve(size_t new_max)
+	{
+		if (new_max > m_max)
+		{
+			Grow(new_max);
+		}
+	}
+
+	static Array MakeUninitialized(size_t num)
+	{
+		Array ret{};
+		ret.m_data = (T*)malloc(sizeof(T)* num);
+		ret.m_num = num;
+		ret.m_max = num;
+		return std::move(ret);
+	}
+
 	size_t Add(const T& item)
 	{
 		EnsureSpace(m_num + 1);
@@ -82,7 +99,19 @@ public:
 	size_t Add(T&& item) 
 	{
 		EnsureSpace(m_num + 1);
-		return AddSafe(item);
+		return AddSafe(std::forward<T>(item));
+	}
+
+	size_t Emplace(T&& item)
+	{
+		EnsureSpace(m_num + 1);
+		return AddSafe(std::forward<T>(item));
+	}
+
+	template<typename... US>
+	size_t Emplace(US&&... us)
+	{
+		return Add(T(std::forward<US>(us)...));
 	}
 
 	size_t Num() const { return m_num; }
@@ -92,6 +121,17 @@ public:
 	{
 		return m_data[index];
 	}
+
+	T* Data() { return m_data; }
+	const T* Data() const { return m_data; }
+
+	bool IsEmpty() const { return m_num == 0; }
+
+	auto begin() { return mu::MakeRangeIterator(mu::Range(m_data, m_num)); }
+	auto end() { return decltype(begin())::End(); }
+
+	auto begin() const { return mu::MakeRangeIterator(mu::Range(m_data, m_num)); }
+	auto end() const { return decltype(begin())::End(); }
 
 private:
 	void InitEmpty(size_t num)
@@ -125,9 +165,9 @@ private:
 		return m_num++;
 	}
 
-	void AddSafe(T&& item)
+	size_t AddSafe(T&& item)
 	{
-		new(m_data + m_num) T(item);
+		new(m_data + m_num) T(std::forward<T>(item));
 		return m_num++;
 	}
 
@@ -139,3 +179,4 @@ private:
 		}
 	}
 };
+
