@@ -105,6 +105,20 @@ namespace mu
 			T& Front() { return *m_start; }
 			const T& Front() const { return *m_start; }
 			size_t Size() const { return m_end - m_start; }
+			
+			template<typename U>
+			bool operator==(const PointerRange<U>& other) const
+			{
+				return m_start == other.m_start
+					&& m_end == other.m_end;
+			}
+
+			template<typename U>
+			bool operator!=(const PointerRange<U>& other) const
+			{
+				return m_start != other.m_start
+					|| m_end != other.m_end;
+			}
 		};
 
 		// A linear infinite range over an integral type
