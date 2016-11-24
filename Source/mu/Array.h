@@ -90,6 +90,15 @@ public:
 		return std::move(ret);
 	}
 
+	template<typename... US>
+	static Array MakeUnique(US&&... us)
+	{
+		Array ret{};
+		ret.Reserve(sizeof...(US));
+		ret.AddManyUnique(us...);
+		return std::move(ret);
+	}
+
 	size_t Add(const T& item)
 	{
 		EnsureSpace(m_num + 1);
@@ -114,8 +123,10 @@ public:
 		return Add(T(std::forward<US>(us)...));
 	}
 
-	size_t Num() const { return m_num; }
-	size_t Max() const { return m_max; }
+	T& operator[](size_t index)
+	{
+		return m_data[index];
+	}
 
 	const T& operator[](size_t index) const
 	{
@@ -125,7 +136,21 @@ public:
 	T* Data() { return m_data; }
 	const T* Data() const { return m_data; }
 
+	size_t Num() const { return m_num; }
+	size_t Max() const { return m_max; }
 	bool IsEmpty() const { return m_num == 0; }
+
+	bool Contains(const T& item) const
+	{
+		for (const T& t : *this)
+		{
+			if (t == item)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
 
 	auto begin() { return mu::MakeRangeIterator(mu::Range(m_data, m_num)); }
 	auto end() { return decltype(begin())::End(); }
