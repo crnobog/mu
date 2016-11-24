@@ -154,7 +154,7 @@ private:
 		T* new_data = (T*)malloc(sizeof(T) * new_size);
 		auto from = mu::Range(m_data, m_num);
 		auto to = mu::Range(new_data, m_num);
-		mu::MoveConstruct(from, to);
+		mu::MoveConstruct(to, from);
 		m_data = new_data;
 		m_max = new_size;
 	}
