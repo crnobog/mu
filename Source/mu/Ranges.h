@@ -87,8 +87,9 @@ namespace mu
 		class PointerRange
 		{
 			T* m_start, *m_end;
+
 		public:
-			enum { HasSize = 1 };
+			static constexpr bool HasSize = true;
 
 			PointerRange(T* start, T* end)
 				: m_start(start)
