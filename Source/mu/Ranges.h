@@ -146,7 +146,7 @@ namespace mu
 			static constexpr bool HasSize = IN_RANGE::HasSize;
 
 			TransformRange(IN_RANGE r, FUNC f) 
-				: m_range(r), m_func(f)
+				: m_range(std::move(r)), m_func(std::move(f))
 			{
 			}
 
