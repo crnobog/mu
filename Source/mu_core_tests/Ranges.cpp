@@ -171,5 +171,19 @@ namespace mu_core_tests_ranges
 				Assert::AreEqual(i * 5, r.Front());
 			}
 		}
+
+		TEST_METHOD(TransformConstLambda)
+		{
+			const int arr[] = { 1, 2, 3, 4, 5 };
+			auto r = Transform(Range(arr), [](int a) { return a * 5; });
+
+			Assert::IsTrue(r.HasSize);
+			Assert::AreEqual(size_t(5), r.Size());
+
+			for (int i = 0; !r.IsEmpty(); ++i, r.Advance())
+			{
+				Assert::AreEqual(arr[i] * 5, r.Front());
+			}
+		}
 	};
 }
