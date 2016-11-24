@@ -33,7 +33,7 @@ namespace mu
 	{
 		for (; !r.IsEmpty(); r.Advance())
 		{
-			r.Front() = f(r.Front());
+			f(r.Front());
 		}
 	}
 }

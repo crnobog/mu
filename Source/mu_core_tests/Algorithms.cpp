@@ -165,7 +165,7 @@ namespace mu_core_tests_algorithms
 		{
 			int arr[] = { 1,2,3,4 };
 			int expected[] = { 2,4,6,8 };
-			Map(Range(arr), [](int a) { return a * 2; });
+			Map(Range(arr), [](int& a) { a *= 2; });
 
 			for (auto r = Range(arr), x = Range(expected); !r.IsEmpty(); r.Advance(), x.Advance())
 			{
