@@ -29,9 +29,11 @@ namespace mu
 	}
 
 	template<typename RANGE, typename FUNC>
-	auto Map(RANGE&& r, FUNC&& f)
+	auto Map(RANGE&& in_r, FUNC&& f)
 	{
-		for (; !r.IsEmpty(); r.Advance())
+		typedef std::decay<RANGE>::type RANGE_TYPE;
+		for (RANGE_TYPE r{ std::forward<RANGE_TYPE>(in_r) }; 
+			 !r.IsEmpty(); r.Advance())
 		{
 			f(r.Front());
 		}

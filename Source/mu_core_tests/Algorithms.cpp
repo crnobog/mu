@@ -181,5 +181,15 @@ namespace mu_core_tests_algorithms
 
 			Assert::AreEqual(35, sum);
 		}
+
+		TEST_METHOD(MapLambdaOriginalRangeNotAdvanced)
+		{
+			int arr[] = { 1,2,3,4 };
+			auto initial = Range(arr);
+
+			Map(initial, [](int& a) { a++; });
+
+			Assert::IsTrue(Range(arr) == initial);
+		}
 	};
 }
