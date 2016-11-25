@@ -158,6 +158,20 @@ public:
 		return Add(T(std::forward<US>(us)...));
 	}
 
+	template<typename RANGE>
+	void Append(RANGE&& r)
+	{
+		for (auto&& item : r)
+		{
+			Add(std::forward<decltype(item)>(item));
+		}
+	}
+
+	void AppendRaw(const T* items, size_t count)
+	{
+		Append(mu::Range(items, count));
+	}
+
 	T& operator[](size_t index)
 	{
 		return m_data[index];

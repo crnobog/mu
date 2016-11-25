@@ -61,12 +61,13 @@ namespace mu
 			std::forward<std::decay<FUNC>::type>(f));
 	}
 
-	template<typename RANGE>
-	auto MakeRangeIterator(RANGE&& r)
+	template<typename R>
+	auto MakeRangeIterator(R&& r)
 	{
-		return RangeIterator<std::decay<RANGE>::type>(r);
+		typedef std::decay<R>::type RANGE_TYPE;
+		return RangeIterator<RANGE_TYPE>(std::forward<RANGE_TYPE>(r));
 	}
-	
+		
 	// Adaptor for using ranges in begin-end based range-based for loops
 	template<typename RANGE>
 	struct RangeIterator
@@ -91,9 +92,14 @@ namespace mu
 		using mu::functor::FMap;
 		using mu::functor::FMapVoid;
 
+		namespace details
+		{
+			template<typename T> struct WithBeginEnd;
+		}
+
 		// A linear forward range over raw memory of a certain type
 		template<typename T>
-		class PointerRange
+		class PointerRange : public details::WithBeginEnd<PointerRange<T>>
 		{
 			T* m_start, *m_end;
 
@@ -207,6 +213,13 @@ namespace mu
 
 		namespace details
 		{
+			template<typename RANGE>
+			struct WithBeginEnd
+			{
+				auto begin() { return RangeIterator<RANGE>{ *static_cast<RANGE*>(this)}; }
+				auto end() { return RangeIterator<RANGE>::End(); }
+			};
+
 			// Helpers for calling members in variadic template expansion
 			template<typename RANGE>
 			struct RangeIsEmpty { bool operator()(const RANGE& r) { return r.IsEmpty(); } };

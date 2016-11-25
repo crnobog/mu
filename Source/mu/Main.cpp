@@ -33,12 +33,7 @@ void CreateVulkanInstance(mu::vk::Instance& out_instance)
 	{
 		uint32_t count = 0;
 		const char** extensions = glfwGetRequiredInstanceExtensions(&count);
-
-		for (size_t i : mu::Indices(count))
-		{
-			instance_extensions.Emplace(extensions[i]);
-		}
-
+		instance_extensions.AppendRaw(extensions, count);
 		instance_extensions.Emplace(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 	}
 
