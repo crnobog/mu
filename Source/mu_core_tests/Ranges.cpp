@@ -72,7 +72,6 @@ namespace mu_core_tests_ranges
 			Assert::IsTrue(std::is_same_v<const int&, decltype(r.Front())>);
 		}
 
-
 		TEST_METHOD(ZipRanges)
 		{
 			int as[] = { 0,1,2,3,4,5,6,7,8,9 };
@@ -140,6 +139,27 @@ namespace mu_core_tests_ranges
 
 			auto r = Zip(Range(a), Range(b));
 			Assert::IsTrue(std::is_same_v<std::tuple<int&, const int&>, decltype(r.Front())>);
+		}
+
+		TEST_METHOD(IterateRangeBased)
+		{
+			int arr[] = { 1, 2, 3, 4 };
+			auto r = Range(arr);
+			const auto cr = Range(arr);
+
+			int i = 0;
+			for (auto item : r)
+			{
+				Assert::AreEqual(arr[i], item);
+				++i;
+			}
+
+			i = 0;
+			for (auto item : cr)
+			{
+				Assert::AreEqual(arr[i], item);
+				++i;
+			}
 		}
 	};
 

@@ -216,8 +216,8 @@ namespace mu
 			template<typename RANGE>
 			struct WithBeginEnd
 			{
-				auto begin() { return RangeIterator<RANGE>{ *static_cast<RANGE*>(this)}; }
-				auto end() { return RangeIterator<RANGE>::End(); }
+				auto begin() const { return RangeIterator<RANGE>{ *static_cast<const RANGE*>(this)}; }
+				auto end() const { return RangeIterator<RANGE>::End(); }
 			};
 
 			// Helpers for calling members in variadic template expansion
