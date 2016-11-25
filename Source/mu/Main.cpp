@@ -269,9 +269,7 @@ Swapchain CreateSwapChain(
 	{
 		image_count = Min(image_count, swap_chain_support.capabilities.maxImageCount);
 	}
-	Array<uint32_t> queue_family_indices{ device_selection.m_graphics_queue_family, device_selection.m_present_queue_family };
-	// TODO:
-	//queue_family_indices.erase(std::unique(queue_family_indices.begin(), queue_family_indices.end()), queue_family_indices.end());
+	auto queue_family_indices = Array<uint32_t>::MakeUnique( device_selection.m_graphics_queue_family, device_selection.m_present_queue_family );
 
 	VkSharingMode sharing_mode = queue_family_indices.Num() == 1 ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
 
