@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+  
+  <!-- Array<T> -->
+  <Type Name="Array&lt;*&gt;" >
+    <DisplayString>Size = {m_num}</DisplayString>
+    <Expand>
+      <Item Name="Size">m_num</Item>
+      <Item Name="Capacity">m_max</Item>
+      <ArrayItems>
+        <Size>m_num</Size>
+        <ValuePointer>m_data</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  
+  <!-- PointerRange<T> -->
+  <Type Name="mu::ranges::PointerRange&lt;*&gt;" >
+    <DisplayString>PointerRange Size = {m_end - m_start}</DisplayString>
+    <Expand>
+      <Item Name="Size">m_end - m_start</Item>
+      <ArrayItems>
+        <Size>m_end - m_start</Size>
+        <ValuePointer>m_start</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  
+</AutoVisualizer>
