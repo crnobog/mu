@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup>
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)$(MSBuildThisFileName).xml" />
+    <AvailableItemName Include="GLSL_SPIRV">
+      <Targets>_GLSL_SPIRV</Targets>
+    </AvailableItemName>
+  </ItemGroup>
+
+  <UsingTask 
+    TaskName="GLSL_SPIRV" 
+    TaskFactory="XamlTaskFactory" 
+    AssemblyName="Microsoft.Build.Tasks.v4.0">
+    <Task>$(MSBuildThisFileDirectory)$(MSBuildThisFileName).xml</Task>
+  </UsingTask>
+
+  <Target Name="_GLSL_SPIRV"
+          BeforeTargets="$(GLSL_SPIRVBeforeTargets)"
+          AfterTargets="$(GLSL_SPIRVAfterTargets)"
+          Condition="'@(GLSL_SPIRV)' != ''"
+          Inputs="%(GLSL_SPIRV.Identity);$(MSBuildProjectFile)"
+          Outputs="@(GLSL_SPIRV->'%(OutputFile)')"
+          DependsOnTargets="$(GLSL_SPIRVDependsOn)">
+    <ItemGroup Condition="'@(SelectedFiles)' != ''">
+      <GLSL_SPIRV Remove="@(GLSL_SPIRV)" Condition="'%(Identity)' != '@(SelectedFiles)'" />
+    </ItemGroup>
+    <ItemGroup>
+      <GLSL_SPIRV_tlog Include="%(GLSL_SPIRV.OutputFile)" Condition="'%(GLSL_SPIRV.OutputFile)' != '' and '%(GLSL_SPIRV.ExcludedFromBuild)' != 'true'">
+        <Source>@(GLSL_SPIRV, '|')</Source>
+      </GLSL_SPIRV_tlog>
+    </ItemGroup>
+    <Message
+      Importance="High"
+      Text="%(GLSL_SPIRV.ExecutionDescription)" />
+    <WriteLinesToFile
+      Condition="'@(GLSL_SPIRV_tlog)' != '' and '%(GLSL_SPIRV_tlog.ExcludedFromBuild)' != 'true'"
+      File="$(TLogLocation)$(ProjectName).write.1u.tlog"
+      Lines="^%(GLSL_SPIRV_tlog.Source);@(GLSL_SPIRV_tlog-&gt;'%(Fullpath)')"
+      Encoding="Unicode"/>
+    <MakeDir Directories="@(GLSL_SPIRV->'%(OutputDirectory)')" />
+    <GLSL_SPIRV
+      Condition="'@(GLSL_SPIRV)' != ''"
+      CommandLineTemplate="%(GLSL_SPIRV.CommandLineTemplate)"
+      CompileMode="%(GLSL_SPIRV.CompileMode)"
+      OutputFile="%(GLSL_SPIRV.OutputFile)"
+      OutputDirectory="%(GLSL_SPIRV.OutputDirectory)"
+      OutputPath="%(GLSL_SPIRV.OutputPath)"
+      Inputs="%(GLSL_SPIRV.Identity)"/>
+  </Target>
+
+  <Target Name="_GLSL_SPIRV_Clean"
+          BeforeTargets="Clean"
+          AfterTargets="" >
+    <Message Text="Cleaning shaders" Importance="High" />
+    <Delete Files="@(GLSL_SPIRV->'%(OutputPath)')" TreatErrorsAsWarnings="False" />
+  </Target>
+
+</Project>

@@ -40,8 +40,19 @@
     <Filter Include="Vulkan">
       <UniqueIdentifier>{662f3486-e133-42e6-91ff-c576f3a11274}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{54802181-b128-4ef7-b443-6abff733c931}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="mu.natvis" />
+  </ItemGroup>
+  <ItemGroup>
+    <GLSL_SPIRV Include="..\Shaders\shader.frag">
+      <Filter>Shaders</Filter>
+    </GLSL_SPIRV>
+    <GLSL_SPIRV Include="..\Shaders\shader.vert">
+      <Filter>Shaders</Filter>
+    </GLSL_SPIRV>
   </ItemGroup>
 </Project>

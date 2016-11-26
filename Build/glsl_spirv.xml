@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ProjectSchemaDefinitions xmlns="http://schemas.microsoft.com/build/2009/properties"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+      xmlns:sys="clr-namespace:System;assembly=mscorlib">
+  <ItemType Name="GLSL_SPIRV" DisplayName="GLSL -> SPIR-V" />
+  <FileExtension Name="*.frag" ContentType="GLSL_SPIRV" />
+  <FileExtension Name="*.vert" ContentType="GLSL_SPIRV" />
+  <ContentType Name="GLSL_SPIRV" DisplayName="GLSL -> SPIR-V" ItemType="GLSL_SPIRV" />
+  
+  <Rule Name="GLSL_SPIRV"
+      PageTemplate="tool" 
+      DisplayName="Compile GLSL to SPIR-V" 
+      Order="200"
+      SwitchPrefix="-">
+    <Rule.DataSource>
+      <DataSource
+        Persistence="ProjectFile"
+        ItemType="GLSL_SPIRV" />
+    </Rule.DataSource>
+  <Rule.Categories>
+      <Category Name="GLSL_SPIRV" DisplayName="GLSL to SPIR-V" />
+    </Rule.Categories>
+    <StringProperty
+      Name="OutputFile"
+      Category="GLSL_SPIRV"
+      DisplayName="Output"
+      Visible="True"
+      IncludeInCommandLine="False"/>
+    <StringProperty
+      Name="OutputDirectory"
+      Category="GLSL_SPIRV"
+      DisplayName="Output Directory"
+      IncludeInCommandLine="False"
+      Visible="True" />
+    <StringProperty
+      Name="OutputPath"
+      Category="GLSL_SPIRV"
+      DisplayName="Output Path"
+      IncludeInCommandLine="True"
+      Visible="True" 
+      Switch="o [value]"/>
+    <StringProperty
+      Name="CommandLineTemplate"
+      Category="GLSL_SPIRV"
+      DisplayName="Command Line Template"
+      Visible="True" ReadOnly="True"
+      IncludeInCommandLine="False" />
+    <StringProperty
+      Name="ExecutionDescription"
+      Category="GLSL_SPIRV"
+      DisplayName="Execution Description"
+      IncludeInCommandLine="False"
+      Visible="True" ReadOnly="True" />
+    <StringListProperty
+      Name="Inputs"
+      Category="GLSL_SPIRV"
+      DisplayName="Inputs"
+      IncludeInCommandLine="False"
+      Visible="True" ReadOnly="True" />
+    <EnumProperty
+      Name="CompileMode"
+      Category="GLSL_SPIRV"
+      DisplayName="Compile Mode"
+      Visible="True">
+      <EnumValue Name="vulkan" DisplayName="Vulkan" Switch="V" />
+      <EnumValue Name="opengl" DisplayName="OpenGL" Switch="G" />
+    </EnumProperty>
+  </Rule>
+</ProjectSchemaDefinitions>
