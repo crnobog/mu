@@ -20,7 +20,7 @@
           AfterTargets="$(GLSL_SPIRVAfterTargets)"
           Condition="'@(GLSL_SPIRV)' != ''"
           Inputs="%(GLSL_SPIRV.Identity);$(MSBuildProjectFile)"
-          Outputs="@(GLSL_SPIRV->'%(OutputFile)')"
+          Outputs="@(GLSL_SPIRV->'%(OutputPath)')"
           DependsOnTargets="$(GLSL_SPIRVDependsOn)">
     <ItemGroup Condition="'@(SelectedFiles)' != ''">
       <GLSL_SPIRV Remove="@(GLSL_SPIRV)" Condition="'%(Identity)' != '@(SelectedFiles)'" />
