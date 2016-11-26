@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup
+    Condition="'$(GLSL_SPIRVBeforeTargets)' == '' and '$(GLSL_SPIRVAfterTargets)' == '' and '$(ConfigurationType)' != 'Makefile'">
+    <GLSL_SPIRVBeforeTargets>Midl</GLSL_SPIRVBeforeTargets>
+    <GLSL_SPIRVAfterTargets>CustomBuild</GLSL_SPIRVAfterTargets>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GLSL_SPIRVDependsOn Condition="'$(ConfigurationType)' != 'Makefile'">_SelectedFiles;ResolveAssemblyReferences;$(GLSL_SPIRVDependsOn)</GLSL_SPIRVDependsOn>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <GLSL_SPIRV>
+      <CommandLineTemplate>glslangvalidator.exe [AllOptions] [AdditionalOptions] [Inputs]</CommandLineTemplate>
+      <OutputDirectory>$(SolutionDir)..\Shaders\Bin\</OutputDirectory>
+      <OutputFile>%(Filename)%(Extension).spv</OutputFile>
+      <OutputPath>%(OutputDirectory)%(OutputFile)</OutputPath>
+      <ExecutionDescription>Compiling shader %(Filename)%(Extension)...</ExecutionDescription>
+      <CompileMode>vulkan</CompileMode>
+    </GLSL_SPIRV>
+  </ItemDefinitionGroup>
+</Project>
