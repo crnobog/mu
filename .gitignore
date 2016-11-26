@@ -4,3 +4,4 @@ ipch
 *.vcxproj.user
 Intermediate/
 Binaries/
+Shaders/Bin
