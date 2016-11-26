@@ -318,18 +318,6 @@ Swapchain CreateSwapChain(
 	return{ std::move(out_swapchain), std::move(images), std::move(image_views), surface_format.format, extent };
 }
 
-struct A
-{
-	A(std::initializer_list<int> a)
-	{
-		mu::dbg::Log("initializer list constructor");
-	}
-	A(int a)
-	{
-		mu::dbg::Log("int constructor");
-	}
-};
-
 int main(int, char**)
 {
 	if (!glfwInit())
