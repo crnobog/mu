@@ -72,4 +72,33 @@ namespace mu
 		}
 		return r;
 	}
+
+	// Fill the range with objects constructs with the given arguments
+	template<typename RANGE, typename... ARGS>
+	void FillConstruct(RANGE&& in_r, ARGS... args)
+	{
+		typedef std::decay<RANGE>::type RANGE_TYPE;
+		RANGE_TYPE r{ std::forward<RANGE_TYPE>(in_r) };
+
+		typedef std::decay<decltype(r.Front())>::type ITEM_TYPE;
+
+		for (auto& item : r)
+		{
+			new(&item) ITEM_TYPE(std::forward<ARGS>(args)...);
+		}
+	}
+	// Fill the range with objects constructs with the given arguments
+	template<typename RANGE, typename... ARGS>
+	void Fill(RANGE&& in_r, ARGS... args)
+	{
+		typedef std::decay<RANGE>::type RANGE_TYPE;
+		RANGE_TYPE r{ std::forward<RANGE_TYPE>(in_r) };
+
+		typedef std::decay<decltype(r.Front())>::type ITEM_TYPE;
+
+		for (auto& item : r)
+		{
+			item = ITEM_TYPE(std::forward<ARGS>(args)...);
+		}
+	}
 }
