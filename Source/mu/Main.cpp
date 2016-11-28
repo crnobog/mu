@@ -201,12 +201,8 @@ void CreateDevice(
 	GLFWwindow* window,
 	VkInstance instance,
 	VkSurfaceKHR surface,
-	mu::vk::DebugReportCallbackEXT& out_debug_callback,
 	mu::vk::Device& out_device,
 	VkQueue& out_graphics_queue, VkQueue& out_present_queue)
-{
-	RegisterDebugCallback(instance, out_debug_callback);
-	
 	mu::vk::SwapChainSupport swap_chain_support = mu::vk::QuerySwapChainSupport(selected_device.m_device, surface);
 	ChooseSurfaceFormat(swap_chain_support.surface_formats);
 
@@ -610,6 +606,8 @@ int main(int, char**)
 	try
 	{
 		CreateVulkanInstance(instance);
+		RegisterDebugCallback(instance, debug_callbacks);
+
 		surface = mu::vk::SurfaceKHR{ instance, nullptr };
 		VkResult err = glfwCreateWindowSurface(instance, window, nullptr, surface.Replace());
 		if (err)
@@ -619,7 +617,7 @@ int main(int, char**)
 
 		Array<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 		PhysicalDeviceSelection selected_device = SelectPhysicalDevice(device_extensions, instance, surface);
-		CreateDevice(selected_device, device_extensions, window, instance, surface, debug_callbacks, device, graphics_queue, present_queue);
+		CreateDevice(selected_device, device_extensions, window, instance, surface, device, graphics_queue, present_queue);
 		swapchain = CreateSwapChain(window, selected_device, device, surface);
 
 		auto vert_shader_code = LoadFileToArray("../Shaders/Bin/shader.vert.spv");
