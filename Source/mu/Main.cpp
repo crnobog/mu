@@ -12,6 +12,7 @@
 #include "VulkanTools.h"
 #include "Utils.h"
 #include "Math.h"
+#include "FileReader.h"
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 	VkDebugReportFlagsEXT                       flags,
@@ -318,6 +319,235 @@ Swapchain CreateSwapChain(
 	return{ std::move(out_swapchain), std::move(images), std::move(image_views), surface_format.format, extent };
 }
 
+mu::vk::ShaderModule CreateShaderModule(VkDevice device, const mu::ranges::PointerRange<uint8_t>& code)
+{
+	VkShaderModuleCreateInfo create_info = {
+		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+		nullptr,
+		0,
+		code.Size(), reinterpret_cast<const uint32_t*>(&code.Front()),
+	};
+
+	mu::vk::ShaderModule shader_module{ device, nullptr };
+	if (vkCreateShaderModule(device, &create_info, nullptr, shader_module.Replace()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create shader module");
+	}
+	return std::move(shader_module);
+}
+
+mu::vk::PipelineLayout CreatePipelineLayout(VkDevice device)
+{
+	VkPipelineLayoutCreateInfo pipeline_create_info = {
+		VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+		nullptr,
+		0,
+		0, nullptr,	// descriptor sets 
+		0, nullptr,	// push constants
+	};
+
+	auto pipeline_layout = mu::vk::PipelineLayout{ device, nullptr };
+	if (vkCreatePipelineLayout(device, &pipeline_create_info, nullptr, pipeline_layout.Replace()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create pipeline layout");
+	}
+	return pipeline_layout;
+}
+
+mu::vk::RenderPass CreateRenderPass(VkDevice device, VkFormat swapchain_format)
+{
+	VkAttachmentDescription color_attachment = {
+		0, // flags
+		swapchain_format, 
+		VK_SAMPLE_COUNT_1_BIT,
+		VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE,	// attachment ops
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE, VK_ATTACHMENT_STORE_OP_DONT_CARE, // stencil ops
+		VK_IMAGE_LAYOUT_UNDEFINED, // initial layout
+		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, // final layout
+	};
+
+	VkAttachmentReference color_attachment_ref = {
+		0, // attachment index
+		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, // layout
+	};
+
+	VkSubpassDescription subpass = {
+		0, // flags
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		0, nullptr, // input attachments
+		1, &color_attachment_ref, // color atachments
+		nullptr, // resolve attachments
+		nullptr, // depth stencil attachment
+		0, nullptr, // preserve attachments
+	};
+
+	VkRenderPassCreateInfo render_pass_info = {
+		VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		nullptr,
+		0,
+		1, &color_attachment,
+		1, &subpass,
+		0, nullptr, // dependencies
+	};
+
+	mu::vk::RenderPass render_pass{ device, nullptr };
+	if (vkCreateRenderPass(device, &render_pass_info, nullptr, render_pass.Replace()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create render pass");
+	}
+	return std::move(render_pass);
+}
+
+mu::vk::Pipeline CreatePipeline(
+	VkDevice			device, 
+	VkPipelineLayout	pipeline_layout, 
+	VkRenderPass		render_pass, 
+	VkShaderModule		vert_shader, 
+	VkShaderModule		frag_shader, 
+	VkExtent2D			viewport_extent)
+{
+	VkPipelineShaderStageCreateInfo shader_stages[] = {
+		{
+			VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			nullptr,
+			0,
+			VK_SHADER_STAGE_VERTEX_BIT,
+			vert_shader,
+			"main",
+			nullptr
+		},
+		{
+			VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+			nullptr,
+			0,
+			VK_SHADER_STAGE_FRAGMENT_BIT,
+			frag_shader,
+			"main",
+			nullptr
+		}
+	};
+	VkPipelineVertexInputStateCreateInfo vertex_input_info = {
+		VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+		nullptr,
+		0,
+		0, nullptr, // vertex binding description
+		0, nullptr, // vertex attribute description
+	};
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_info = {
+		VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+		nullptr,
+		0,
+		VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+		false, // primitive restart enable
+	};
+
+	VkViewport viewport = {
+		0, 0,
+		float(viewport_extent.width), float(viewport_extent.height),
+		0.0f, 1.0f, // depth range
+	};
+
+	VkRect2D scissor = {
+		{ 0, 0 },
+		{ viewport_extent.width, viewport_extent.height }
+	};
+
+	VkPipelineViewportStateCreateInfo viewport_create_info = {
+		VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+		nullptr,
+		0,
+		1, &viewport,
+		1, &scissor
+	};
+	VkPipelineRasterizationStateCreateInfo raster_state_create_info = {
+		VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+		nullptr,
+		0,
+		false, // depth clamp
+		false, // raster discard enable
+		VK_POLYGON_MODE_FILL,
+		VK_CULL_MODE_BACK_BIT,
+		VK_FRONT_FACE_CLOCKWISE,
+		false, // depth bias enable
+		0.0f, // constant depth bias
+		0.0f,  // depth bias clamp
+		0.0f, // depth bias slope factor
+		1.0f, // line width
+	};
+
+	VkPipelineMultisampleStateCreateInfo multisample_state_create_info = {
+		VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+		nullptr,
+		0,
+		VK_SAMPLE_COUNT_1_BIT,
+		false, // sample shading enable
+		1.0f, // min sample shading
+		nullptr, // sample mask
+		false, // alpha to coverage
+		false, // alpha to one
+	};
+
+	VkPipelineColorBlendAttachmentState color_blend_attachment_state = {
+		false, // blend enable
+		VK_BLEND_FACTOR_ONE, // source color blend factor
+		VK_BLEND_FACTOR_ZERO, // dest color blend factor
+		VK_BLEND_OP_ADD, // color blend op
+		VK_BLEND_FACTOR_ONE, // source alpha blend factor
+		VK_BLEND_FACTOR_ZERO, // dest alpha blend factor
+		VK_BLEND_OP_ADD, // alpha blend op
+		VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, // color mask
+	};
+
+	VkPipelineColorBlendStateCreateInfo color_blend_state_create_info = {
+		VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+		nullptr,
+		0,
+		false, // logic op enable
+		VK_LOGIC_OP_COPY, // logic op
+		1, &color_blend_attachment_state, // attachments
+		{ 0.0f, 0.0f, 0.0f, 0.0f }, // blend constants
+	};
+
+	VkDynamicState dynamic_states[] = {
+		VK_DYNAMIC_STATE_VIEWPORT,
+		VK_DYNAMIC_STATE_LINE_WIDTH,
+	};
+
+	VkPipelineDynamicStateCreateInfo dynamic_state_create_info = {
+		VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+		nullptr,
+		0,
+		sizeof(dynamic_states) / sizeof(VkDynamicState), dynamic_states
+	};
+
+	VkGraphicsPipelineCreateInfo pipeline_info = {
+		VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+		nullptr, 
+		0,
+		2, shader_stages,
+		&vertex_input_info,
+		&input_assembly_info,
+		nullptr, // tesselation state
+		&viewport_create_info,
+		&raster_state_create_info,
+		&multisample_state_create_info,
+		nullptr, // depth stencil info
+		&color_blend_state_create_info,
+		&dynamic_state_create_info,
+		pipeline_layout,
+		render_pass,
+		0, // subpass
+		nullptr, -1 // base pipeline
+	};
+
+	mu::vk::Pipeline pipeline{ device, nullptr };
+	if (vkCreateGraphicsPipelines(device, nullptr, 1, &pipeline_info, nullptr, pipeline.Replace()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create pipeline");
+	}
+	return std::move(pipeline);
+}
+
 int main(int, char**)
 {
 	if (!glfwInit())
@@ -342,6 +572,10 @@ int main(int, char**)
 	mu::vk::SurfaceKHR surface;
 	Swapchain swapchain;
 	VkQueue graphics_queue, present_queue;
+	mu::vk::ShaderModule vert_shader, frag_shader;
+	mu::vk::PipelineLayout pipeline_layout;
+	mu::vk::RenderPass render_pass;
+	mu::vk::Pipeline pipeline;
 	try
 	{
 		CreateVulkanInstance(instance);
@@ -355,7 +589,17 @@ int main(int, char**)
 		Array<const char*> device_extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 		PhysicalDeviceSelection selected_device = SelectPhysicalDevice(device_extensions, instance, surface);
 		CreateDevice(selected_device, device_extensions, window, instance, surface, debug_callbacks, device, graphics_queue, present_queue);
-		swapchain = CreateSwapChain(window, selected_device, device, surface);		
+		swapchain = CreateSwapChain(window, selected_device, device, surface);
+
+		auto vert_shader_code = LoadFileToArray("../Shaders/Bin/shader.vert.spv");
+		vert_shader = CreateShaderModule(device, mu::Range(vert_shader_code));
+
+		auto frag_shader_code = LoadFileToArray("../Shaders/Bin/shader.frag.spv");
+		frag_shader = CreateShaderModule(device, mu::Range(frag_shader_code));
+
+		pipeline_layout = CreatePipelineLayout(device);
+		render_pass = CreateRenderPass(device, swapchain.image_format);
+		pipeline = CreatePipeline(device, pipeline_layout, render_pass, vert_shader, frag_shader, swapchain.extent);
 	}
 	catch (const std::runtime_error& e)
 	{

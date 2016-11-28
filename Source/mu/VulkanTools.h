@@ -161,6 +161,38 @@ namespace mu
 					vkDestroyImageView(device, image_view, alloc_callbacks);
 				}
 			};
+
+			struct ShaderModule
+			{
+				void operator()(VkShaderModule shader_module, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
+				{
+					vkDestroyShaderModule(device, shader_module, alloc_callbacks);
+				}
+			};
+			
+			struct PipelineLayout
+			{
+				void operator()(VkPipelineLayout pipeline_layout, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
+				{
+					vkDestroyPipelineLayout(device, pipeline_layout, alloc_callbacks);
+				}
+			};
+
+			struct RenderPass
+			{
+				void operator()(VkRenderPass render_pass, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
+				{
+					vkDestroyRenderPass(device, render_pass, nullptr);
+				}
+			};
+
+			struct Pipeline
+			{
+				void operator()(VkPipeline pipeline, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
+				{
+					vkDestroyPipeline(device, pipeline, alloc_callbacks);
+				}
+			};
 		}
 
 		// special
@@ -174,6 +206,10 @@ namespace mu
 		// device-deleted
 		using SwapchainKHR				= VkHandle<VkSwapchainKHR,				deleters::SwapchainKHR,				VkDevice, VkAllocationCallbacks*>;
 		using ImageView					= VkHandle<VkImageView,					deleters::ImageView,				VkDevice, VkAllocationCallbacks*>;
+		using ShaderModule				= VkHandle<VkShaderModule,				deleters::ShaderModule,				VkDevice, VkAllocationCallbacks*>;
+		using PipelineLayout			= VkHandle<VkPipelineLayout,			deleters::PipelineLayout,			VkDevice, VkAllocationCallbacks*>;
+		using RenderPass				= VkHandle<VkRenderPass,				deleters::RenderPass,				VkDevice, VkAllocationCallbacks*>;
+		using Pipeline					= VkHandle<VkPipeline,					deleters::Pipeline,					VkDevice, VkAllocationCallbacks*>;
 
 		Array<VkLayerProperties>		EnumerateInstanceLayerProperties();
 		Array<VkExtensionProperties>	EnumerateInstanceExtensionProperties(const char* layer_name);
