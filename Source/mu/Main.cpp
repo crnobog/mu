@@ -203,22 +203,22 @@ void CreateDevice(
 	VkSurfaceKHR surface,
 	mu::vk::Device& out_device,
 	VkQueue& out_graphics_queue, VkQueue& out_present_queue)
+{	
 	mu::vk::SwapChainSupport swap_chain_support = mu::vk::QuerySwapChainSupport(selected_device.m_device, surface);
 	ChooseSurfaceFormat(swap_chain_support.surface_formats);
 
 	float priority = 1.0f;
 	auto queue_families = Array<uint32_t>::MakeUnique( selected_device.m_graphics_queue_family, selected_device.m_present_queue_family );
-	Array<VkDeviceQueueCreateInfo> queue_create_info;
-	for (uint32_t index : queue_families)
-	{
-		queue_create_info.Add({
+	Array<VkDeviceQueueCreateInfo> queue_create_info{ mu::Transform(mu::Range(queue_families), [&](uint32_t index) {
+		return VkDeviceQueueCreateInfo{
 			VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
 			nullptr,
 			0,
 			index,
 			1,
-			&priority });
-	}
+			&priority };
+		}
+	)};
 
 	VkPhysicalDeviceFeatures device_features = {};
 	VkDeviceCreateInfo device_create_info = {
