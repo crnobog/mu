@@ -60,31 +60,6 @@ namespace mu
 			std::forward<std::decay<IN_RANGE>::type>(r),
 			std::forward<std::decay<FUNC>::type>(f));
 	}
-
-	template<typename R>
-	auto MakeRangeIterator(R&& r)
-	{
-		typedef std::decay<R>::type RANGE_TYPE;
-		return RangeIterator<RANGE_TYPE>(std::forward<RANGE_TYPE>(r));
-	}
-		
-	// Adaptor for using ranges in begin-end based range-based for loops
-	template<typename RANGE>
-	struct RangeIterator
-	{
-		RANGE m_range;
-		
-		struct End {};
-
-		RangeIterator(RANGE r) : m_range(std::move(r))
-		{
-		}
-
-		void operator++() { m_range.Advance(); }
-		auto operator*() { return m_range.Front(); }
-		bool operator!=(End) { return !m_range.IsEmpty(); }
-	};
-
 	namespace ranges
 	{
 		using mu::functor::Fold;
@@ -154,7 +129,7 @@ namespace mu
 
 		// ZipRange combines multiple ranges and iterates them in lockstep
 		template<typename... RANGES>
-		class ZipRange
+		class ZipRange : public details::WithBeginEnd<ZipRange<RANGES...>>
 		{
 			std::tuple<RANGES...> m_ranges;
 
@@ -189,7 +164,7 @@ namespace mu
 		};
 
 		template<typename IN_RANGE, typename FUNC>
-		class TransformRange
+		class TransformRange : public details::WithBeginEnd<TransformRange<IN_RANGE, FUNC>>
 		{
 			IN_RANGE m_range;
 			FUNC m_func;
@@ -210,7 +185,7 @@ namespace mu
 		};
 
 		namespace details
-		{
+		{			
 			template<typename RANGE>
 			struct WithBeginEnd
 			{
@@ -254,6 +229,31 @@ namespace mu
 
 			template<typename RANGE>
 			using RangeFrontType = decltype(std::declval<RANGE>().Front());
+
+			// Adaptor for using ranges in begin-end based range-based for loops
+			template<typename RANGE>
+			struct RangeIterator
+			{
+				RANGE m_range;
+
+				struct End {};
+
+				RangeIterator(RANGE r) : m_range(std::move(r))
+				{
+				}
+
+				void operator++() { m_range.Advance(); }
+				RangeFrontType<RANGE> operator*() { return m_range.Front(); }
+				bool operator!=(End) { return !m_range.IsEmpty(); }
+			};
 		}
+
+	}
+
+	template<typename R>
+	auto MakeRangeIterator(R&& r)
+	{
+		typedef std::decay<R>::type RANGE_TYPE;
+		return ranges::details::RangeIterator<RANGE_TYPE>(std::forward<RANGE_TYPE>(r));
 	}
 }
