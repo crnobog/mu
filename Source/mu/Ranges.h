@@ -47,6 +47,12 @@ namespace mu
 		return Range(arr.Data(), arr.Num());
 	}
 	
+	template<typename T>
+	auto Range(const Array<T>& arr)
+	{
+		return Range(arr.Data(), arr.Num());
+	}
+
 	template<typename... RANGES>
 	auto Zip(RANGES... ranges) { return ranges::ZipRange<RANGES...>(ranges...); }
 
