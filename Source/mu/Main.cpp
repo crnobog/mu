@@ -548,6 +548,37 @@ mu::vk::Pipeline CreatePipeline(
 	return std::move(pipeline);
 }
 
+Array<mu::vk::Framebuffer> CreateFramebuffers(
+	VkDevice device,
+	VkRenderPass render_pass,
+	const Swapchain& swapchain)
+{
+	auto framebuffers = Array<mu::vk::Framebuffer>::MakeUninitialized(swapchain.image_views.Num());
+	mu::FillConstruct(mu::Range(framebuffers), device, nullptr);
+
+	for (std::tuple<const mu::vk::ImageView&, mu::vk::Framebuffer&> pair : mu::Zip(mu::Range(swapchain.image_views), mu::Range(framebuffers)))
+	{
+		VkImageView attachments[] = { std::get<0>(pair) };
+
+		VkFramebufferCreateInfo framebuffer_info = {
+			VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
+			nullptr,
+			0,
+			render_pass,
+			1, attachments,
+			swapchain.extent.width, swapchain.extent.height,
+			1 // layers
+		};
+
+		if (vkCreateFramebuffer(device, &framebuffer_info, nullptr, std::get<1>(pair).Replace()) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to create framebuffer");
+		}
+	}
+
+	return std::move(framebuffers);
+}
+
 int main(int, char**)
 {
 	if (!glfwInit())
@@ -600,6 +631,7 @@ int main(int, char**)
 		pipeline_layout = CreatePipelineLayout(device);
 		render_pass = CreateRenderPass(device, swapchain.image_format);
 		pipeline = CreatePipeline(device, pipeline_layout, render_pass, vert_shader, frag_shader, swapchain.extent);
+		CreateFramebuffers(device, render_pass, swapchain);
 	}
 	catch (const std::runtime_error& e)
 	{

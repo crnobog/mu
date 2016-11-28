@@ -251,6 +251,7 @@ namespace mu
 		using PipelineLayout			= VkHandleDeviceObject<VkPipelineLayout,	vkDestroyPipelineLayout>;
 		using RenderPass				= VkHandleDeviceObject<VkRenderPass,		vkDestroyRenderPass>;
 		using Pipeline					= VkHandleDeviceObject<VkPipeline,			vkDestroyPipeline>;
+		using Framebuffer				= VkHandleDeviceObject<VkFramebuffer,		vkDestroyFramebuffer>;
 
 		Array<VkLayerProperties>		EnumerateInstanceLayerProperties();
 		Array<VkExtensionProperties>	EnumerateInstanceExtensionProperties(const char* layer_name);
