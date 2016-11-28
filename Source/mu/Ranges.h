@@ -111,10 +111,8 @@ namespace mu
 				, m_end(end)
 			{}
 
-			void Advance()
-			{
-				++m_start;
-			}
+			void Advance() { ++m_start; }
+			void AdvanceBy(size_t num) { m_start += num; }
 
 			bool IsEmpty() const { return m_start >= m_end; }
 			T& Front() { return *m_start; }

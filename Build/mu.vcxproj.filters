@@ -6,6 +6,9 @@
     <ClCompile Include="..\Source\mu\VulkanTools.cpp">
       <Filter>Vulkan</Filter>
     </ClCompile>
+    <ClCompile Include="..\Source\mu\FileReader.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\mu\Scope.h" />
@@ -30,6 +33,9 @@
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="..\Source\mu\Functors.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\mu\FileReader.h">
       <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
