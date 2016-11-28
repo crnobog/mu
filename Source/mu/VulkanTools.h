@@ -112,6 +112,47 @@ namespace mu
 			}
 		};
 
+		template<typename T, void(*DESTROY_FUNC)(VkDevice, T, const VkAllocationCallbacks*)>
+		struct VkDeviceObjectDeleter
+		{
+			void operator()(T t, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
+			{
+				DESTROY_FUNC(device, t, alloc_callbacks);
+			}
+		};
+
+		template<typename T, void (*DESTROY_FUNC)(VkDevice, T, const VkAllocationCallbacks*)>
+		class VkHandleDeviceObject : public VkHandle<typename T, typename VkDeviceObjectDeleter<T, DESTROY_FUNC>, VkDevice, VkAllocationCallbacks*>
+		{
+		public:
+			VkHandleDeviceObject()
+				: VkHandle()
+			{
+			}
+
+			VkHandleDeviceObject(VkDevice device, VkAllocationCallbacks* alloc_callbacks)
+				: VkHandle(device, alloc_callbacks)
+			{
+			}
+
+			VkHandleDeviceObject(const VkHandleDeviceObject&) = delete;
+			VkHandleDeviceObject(VkHandleDeviceObject&& other)
+				: VkHandle(std::move(other))
+			{
+			}
+
+			VkHandleDeviceObject& operator=(const VkHandleDeviceObject&) = delete;
+			VkHandleDeviceObject& operator=(VkHandleDeviceObject&& other)
+			{
+				VkHandle::operator=(std::move(other));
+				return *this;
+			}
+
+			~VkHandleDeviceObject()
+			{
+			}
+		};
+
 		namespace deleters
 		{
 			struct Instance
@@ -204,12 +245,12 @@ namespace mu
 		using SurfaceKHR				= VkHandle<VkSurfaceKHR,				deleters::SurfaceKHR,				VkInstance, VkAllocationCallbacks*>;
 		
 		// device-deleted
-		using SwapchainKHR				= VkHandle<VkSwapchainKHR,				deleters::SwapchainKHR,				VkDevice, VkAllocationCallbacks*>;
-		using ImageView					= VkHandle<VkImageView,					deleters::ImageView,				VkDevice, VkAllocationCallbacks*>;
-		using ShaderModule				= VkHandle<VkShaderModule,				deleters::ShaderModule,				VkDevice, VkAllocationCallbacks*>;
-		using PipelineLayout			= VkHandle<VkPipelineLayout,			deleters::PipelineLayout,			VkDevice, VkAllocationCallbacks*>;
-		using RenderPass				= VkHandle<VkRenderPass,				deleters::RenderPass,				VkDevice, VkAllocationCallbacks*>;
-		using Pipeline					= VkHandle<VkPipeline,					deleters::Pipeline,					VkDevice, VkAllocationCallbacks*>;
+		using SwapchainKHR				= VkHandleDeviceObject<VkSwapchainKHR,		vkDestroySwapchainKHR>;
+		using ImageView					= VkHandleDeviceObject<VkImageView,			vkDestroyImageView>;
+		using ShaderModule				= VkHandleDeviceObject<VkShaderModule,		vkDestroyShaderModule>;
+		using PipelineLayout			= VkHandleDeviceObject<VkPipelineLayout,	vkDestroyPipelineLayout>;
+		using RenderPass				= VkHandleDeviceObject<VkRenderPass,		vkDestroyRenderPass>;
+		using Pipeline					= VkHandleDeviceObject<VkPipeline,			vkDestroyPipeline>;
 
 		Array<VkLayerProperties>		EnumerateInstanceLayerProperties();
 		Array<VkExtensionProperties>	EnumerateInstanceExtensionProperties(const char* layer_name);
