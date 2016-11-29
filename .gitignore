@@ -5,3 +5,4 @@ ipch
 Intermediate/
 Binaries/
 Shaders/Bin
+*.opensdf
