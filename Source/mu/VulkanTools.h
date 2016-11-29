@@ -112,7 +112,7 @@ namespace mu
 			}
 		};
 
-		template<typename T, void(*DESTROY_FUNC)(VkDevice, T, const VkAllocationCallbacks*)>
+		template<typename T, void(VKAPI_CALL *DESTROY_FUNC)(VkDevice, T, const VkAllocationCallbacks*)>
 		struct VkDeviceObjectDeleter
 		{
 			void operator()(T t, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
@@ -121,7 +121,7 @@ namespace mu
 			}
 		};
 
-		template<typename T, void (*DESTROY_FUNC)(VkDevice, T, const VkAllocationCallbacks*)>
+		template<typename T, void (VKAPI_CALL *DESTROY_FUNC)(VkDevice, T, const VkAllocationCallbacks*)>
 		class VkHandleDeviceObject : public VkHandle<typename T, typename VkDeviceObjectDeleter<T, DESTROY_FUNC>, VkDevice, VkAllocationCallbacks*>
 		{
 		public:
