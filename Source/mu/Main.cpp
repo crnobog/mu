@@ -575,6 +575,41 @@ Array<mu::vk::Framebuffer> CreateFramebuffers(
 	return std::move(framebuffers);
 }
 
+mu::vk::CommandPool CreateCommandPool(VkDevice device, const PhysicalDeviceSelection& device_info)
+{
+	VkCommandPoolCreateInfo pool_info = {
+		VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+		nullptr,
+		0,
+		device_info.m_graphics_queue_family
+	};
+
+	mu::vk::CommandPool command_pool{ device, nullptr };
+	if (vkCreateCommandPool(device, &pool_info, nullptr, command_pool.Replace()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create command pool");
+	}
+	return std::move(command_pool);
+}
+
+Array<VkCommandBuffer> CreateCommandBuffers(VkDevice device, VkCommandPool command_pool, uint32_t count)
+{
+	auto command_buffers = Array<VkCommandBuffer>::MakeUninitialized(count);
+	VkCommandBufferAllocateInfo alloc_info = {
+		VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+		nullptr,
+		command_pool,
+		VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		count,
+	};
+
+	if( vkAllocateCommandBuffers(device, &alloc_info, command_buffers.Data()) != VK_SUCCESS )
+	{ 
+		throw std::runtime_error("Failed to allocate command buffers");
+	}
+	return std::move(command_buffers);
+}
+
 int main(int, char**)
 {
 	if (!glfwInit())
@@ -603,6 +638,9 @@ int main(int, char**)
 	mu::vk::PipelineLayout pipeline_layout;
 	mu::vk::RenderPass render_pass;
 	mu::vk::Pipeline pipeline;
+	Array<mu::vk::Framebuffer> framebuffers;
+	mu::vk::CommandPool command_pool;
+	Array<VkCommandBuffer> command_buffers;
 	try
 	{
 		CreateVulkanInstance(instance);
@@ -629,7 +667,9 @@ int main(int, char**)
 		pipeline_layout = CreatePipelineLayout(device);
 		render_pass = CreateRenderPass(device, swapchain.image_format);
 		pipeline = CreatePipeline(device, pipeline_layout, render_pass, vert_shader, frag_shader, swapchain.extent);
-		CreateFramebuffers(device, render_pass, swapchain);
+		framebuffers = CreateFramebuffers(device, render_pass, swapchain);
+		command_pool = CreateCommandPool(device, selected_device);
+		command_buffers = CreateCommandBuffers(device, command_pool, uint32_t(framebuffers.Num()));
 	}
 	catch (const std::runtime_error& e)
 	{
