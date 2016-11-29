@@ -113,6 +113,8 @@ namespace mu
 				return m_start != other.m_start
 					|| m_end != other.m_end;
 			}
+
+			PointerRange MakeEmpty() const { return PointerRange{ nullptr, nullptr }; }
 		};
 
 		// A linear infinite range over an integral type
@@ -138,6 +140,12 @@ namespace mu
 		class ZipRange : public details::WithBeginEnd<ZipRange<RANGES...>>
 		{
 			std::tuple<RANGES...> m_ranges;
+
+			template<size_t... INDICES>
+			ZipRange MakeEmpty(std::index_sequence<INDICES...>) const
+			{
+				return ZipRange{ std::get<INDICES>(m_ranges).MakeEmpty()... };
+			}
 
 		public:
 			static constexpr bool HasSize = FoldOr(RANGES::HasSize...);
@@ -167,6 +175,8 @@ namespace mu
 				return Fold<details::RangeMinSizeFolder>(
 					std::numeric_limits<size_t>::max(), m_ranges);
 			}
+
+			ZipRange MakeEmpty() const { return MakeEmpty(mu::functor::details::TupleIndices<decltype(m_ranges)>()); }
 		};
 
 		template<typename IN_RANGE, typename FUNC>
@@ -188,6 +198,8 @@ namespace mu
 
 			template<typename T=IN_RANGE, typename = std::enable_if_t<T::HasSize>>
 			size_t Size() const { return m_range.Size(); }
+
+			TransformRange MakeEmpty() const { return TransformRange{ m_range.MakeEmpty(), m_func }; }
 		};
 
 		namespace details
@@ -196,7 +208,7 @@ namespace mu
 			struct WithBeginEnd
 			{
 				auto begin() const { return RangeIterator<RANGE>{ *static_cast<const RANGE*>(this)}; }
-				auto end() const { return RangeIterator<RANGE>::End(); }
+				auto end() const { return RangeIterator<RANGE>{ static_cast<const RANGE*>(this)->MakeEmpty() }; }
 			};
 
 			// Helpers for calling members in variadic template expansion
@@ -220,14 +232,14 @@ namespace mu
 			struct RangeMinSizeFolder
 			{
 				template<typename T = RANGE, typename std::enable_if<T::HasSize, int>::type = 0>
-				constexpr size_t operator()(size_t s, const RANGE& r)
+				size_t operator()(size_t s, const RANGE& r) const
 				{
 					size_t rs = r.Size();
 					return rs < s ? rs : s;
 				}
 
 				template<typename T = RANGE, typename std::enable_if<!T::HasSize, int>::type = 0>
-				constexpr size_t operator()(size_t s, const RANGE&)
+				size_t operator()(size_t s, const RANGE&) const
 				{
 					return s;
 				}
@@ -242,15 +254,13 @@ namespace mu
 			{
 				RANGE m_range;
 
-				struct End {};
-
 				RangeIterator(RANGE r) : m_range(std::move(r))
 				{
 				}
 
 				void operator++() { m_range.Advance(); }
 				RangeFrontType<RANGE> operator*() { return m_range.Front(); }
-				bool operator!=(End) { return !m_range.IsEmpty(); }
+				bool operator!=(const RangeIterator&) { return !m_range.IsEmpty(); }
 			};
 		}
 

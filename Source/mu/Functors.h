@@ -15,8 +15,7 @@ namespace mu { namespace functor
 		template<template<class...> class FUNCTOR, typename T>
 		typename FunctorApplication<FUNCTOR, T>::type CallFunctor(T&& t)
 		{
-			FUNCTOR<decay<T>::type> f;
-			return f(t);
+			return FUNCTOR<decay<T>::type>{}(t);
 		}
 
 		template<typename TUPLE>
@@ -34,9 +33,7 @@ namespace mu { namespace functor
 		template<template<typename...> class FUNCTOR, typename R, typename T, typename... TS>
 		constexpr auto FoldRec(R r, T&& t, TS&&... ts)
 		{
-			FUNCTOR<decay<T>::type> f;
-			r = f(r, t);
-			return FoldRec<FUNCTOR>(r, ts...);
+			return FoldRec<FUNCTOR>(FUNCTOR<decay<T>::type>{}(r, t), ts...);
 		}
 
 		template<template<typename...> class FUNCTOR, typename R, typename... TS>
@@ -82,13 +79,13 @@ namespace mu { namespace functor
 		template<typename T>
 		struct And
 		{
-			constexpr bool operator()(bool a, T b) { return a && b; }
+			constexpr bool operator()(bool a, T b) const { return a && b; }
 		};
 
 		template<typename T>
 		struct Or
 		{
-			constexpr bool operator()(bool a, T b) { return a || b; }
+			constexpr bool operator()(bool a, T b) const { return a || b; }
 		};
 
 	}

@@ -202,10 +202,10 @@ public:
 	}
 
 	auto begin() { return mu::MakeRangeIterator(mu::Range(m_data, m_num)); }
-	auto end() { return decltype(begin())::End(); }
+	auto end() { return mu::MakeRangeIterator(mu::Range((T*)nullptr, 0)); }
 
 	auto begin() const { return mu::MakeRangeIterator(mu::Range(m_data, m_num)); }
-	auto end() const { return decltype(begin())::End(); }
+	auto end() const { return mu::MakeRangeIterator(mu::Range((T*)nullptr, 0)); }
 
 private:
 	void InitEmpty(size_t num)
