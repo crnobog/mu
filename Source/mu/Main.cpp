@@ -14,6 +14,8 @@
 #include "Math.h"
 #include "FileReader.h"
 
+using std::tuple;
+
 VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 	VkDebugReportFlagsEXT                       flags,
 	VkDebugReportObjectTypeEXT                  objectType,
@@ -610,6 +612,49 @@ Array<VkCommandBuffer> CreateCommandBuffers(VkDevice device, VkCommandPool comma
 	return std::move(command_buffers);
 }
 
+void RecordCommandBuffers(
+	mu::ranges::PointerRange<VkCommandBuffer> command_buffers,
+	mu::ranges::PointerRange<mu::vk::Framebuffer> framebuffers,
+	VkPipeline graphics_pipeline,
+	VkRenderPass render_pass,
+	VkExtent2D framebuffer_extent)
+{
+	for (tuple<VkCommandBuffer&, mu::vk::Framebuffer&> pair : mu::Zip(command_buffers, framebuffers))
+	{
+		VkCommandBuffer command_buffer = std::get<0>(pair);
+		VkFramebuffer framebuffer = std::get<1>(pair);
+
+		VkCommandBufferBeginInfo begin_info = {
+			VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+			nullptr,
+			VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT,
+			nullptr // inheritance info
+		};
+		vkBeginCommandBuffer(command_buffer, &begin_info);
+		{
+			VkClearValue clear_color = { 0.0f, 0.0f, 0.0f, 1.0f };
+			VkRenderPassBeginInfo begin_pass = {
+				VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO,
+				nullptr,
+				render_pass,
+				framebuffer,
+				{ {0,0}, framebuffer_extent },
+				1, &clear_color
+			};
+			vkCmdBeginRenderPass(command_buffer, &begin_pass, VK_SUBPASS_CONTENTS_INLINE);
+			{
+				vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphics_pipeline);
+				vkCmdDraw(command_buffer, 3, 1, 0, 0);
+			}
+			vkCmdEndRenderPass(command_buffer);
+		}
+		if (vkEndCommandBuffer(command_buffer) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to record command buffer");
+		}
+	}
+}
+
 int main(int, char**)
 {
 	if (!glfwInit())
@@ -670,6 +715,7 @@ int main(int, char**)
 		framebuffers = CreateFramebuffers(device, render_pass, swapchain);
 		command_pool = CreateCommandPool(device, selected_device);
 		command_buffers = CreateCommandBuffers(device, command_pool, uint32_t(framebuffers.Num()));
+		RecordCommandBuffers(mu::Range(command_buffers), mu::Range(framebuffers), pipeline, render_pass, swapchain.extent);
 	}
 	catch (const std::runtime_error& e)
 	{
