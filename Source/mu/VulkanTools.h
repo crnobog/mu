@@ -186,54 +186,6 @@ namespace mu
 					vkDestroyDevice(device, alloc_callbacks);
 				}
 			};
-
-			struct SwapchainKHR
-			{
-				void operator()(VkSwapchainKHR swap_chain, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
-				{
-					vkDestroySwapchainKHR(device, swap_chain, alloc_callbacks);
-				}
-			};
-
-			struct ImageView
-			{
-				void operator()(VkImageView image_view, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
-				{
-					vkDestroyImageView(device, image_view, alloc_callbacks);
-				}
-			};
-
-			struct ShaderModule
-			{
-				void operator()(VkShaderModule shader_module, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
-				{
-					vkDestroyShaderModule(device, shader_module, alloc_callbacks);
-				}
-			};
-			
-			struct PipelineLayout
-			{
-				void operator()(VkPipelineLayout pipeline_layout, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
-				{
-					vkDestroyPipelineLayout(device, pipeline_layout, alloc_callbacks);
-				}
-			};
-
-			struct RenderPass
-			{
-				void operator()(VkRenderPass render_pass, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
-				{
-					vkDestroyRenderPass(device, render_pass, nullptr);
-				}
-			};
-
-			struct Pipeline
-			{
-				void operator()(VkPipeline pipeline, VkDevice device, VkAllocationCallbacks* alloc_callbacks)
-				{
-					vkDestroyPipeline(device, pipeline, alloc_callbacks);
-				}
-			};
 		}
 
 		// special
