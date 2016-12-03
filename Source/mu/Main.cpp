@@ -76,7 +76,7 @@ void RegisterDebugCallback(VkInstance instance, mu::vk::DebugReportCallbackEXT& 
 	VkDebugReportCallbackCreateInfoEXT debug_callback_create_info{
 		VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
 		nullptr,
-		VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT | VK_DEBUG_REPORT_INFORMATION_BIT_EXT,
+		VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT /*| VK_DEBUG_REPORT_INFORMATION_BIT_EXT*/,
 		VkDebugCallback,
 		nullptr
 	};
@@ -379,13 +379,21 @@ mu::vk::RenderPass CreateRenderPass(VkDevice device, VkFormat swapchain_format)
 		0, nullptr, // preserve attachments
 	};
 
+	//VkSubpassDependency dependency = {
+	//	VK_SUBPASS_EXTERNAL, 0, // src/dest subpass
+	//	VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, // src/dest stage mask
+	//	0, VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, // src/dest access mask
+	//	0
+	//};
+
 	VkRenderPassCreateInfo render_pass_info = {
 		VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
 		nullptr,
 		0,
 		1, &color_attachment,
 		1, &subpass,
-		0, nullptr, // dependencies
+		//1, &dependency, // dependencies
+		0, nullptr
 	};
 
 	mu::vk::RenderPass render_pass{ device, nullptr };
@@ -464,7 +472,7 @@ mu::vk::Pipeline CreatePipeline(
 		false, // depth clamp
 		false, // raster discard enable
 		VK_POLYGON_MODE_FILL,
-		VK_CULL_MODE_BACK_BIT,
+		VK_CULL_MODE_NONE,
 		VK_FRONT_FACE_CLOCKWISE,
 		false, // depth bias enable
 		0.0f, // constant depth bias
@@ -507,7 +515,7 @@ mu::vk::Pipeline CreatePipeline(
 	};
 
 	VkDynamicState dynamic_states[] = {
-		VK_DYNAMIC_STATE_VIEWPORT,
+		//VK_DYNAMIC_STATE_VIEWPORT,
 		VK_DYNAMIC_STATE_LINE_WIDTH,
 	};
 
@@ -655,6 +663,57 @@ void RecordCommandBuffers(
 	}
 }
 
+void CreateSemaphoresRec(VkDevice device, VkSemaphoreCreateInfo& semaphore_info/*, mu::vk::Semaphore& semaphore*/) { }
+
+template<typename... SEMAPHORES>
+void CreateSemaphoresRec(VkDevice device, VkSemaphoreCreateInfo& semaphore_info, mu::vk::Semaphore& semaphore, SEMAPHORES&... semaphores)
+{
+	semaphore = mu::vk::Semaphore{ device, nullptr };
+	if (vkCreateSemaphore(device, &semaphore_info, nullptr, semaphore.Replace()) != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to create semaphore");
+	}
+	CreateSemaphoresRec(device, semaphore_info, semaphores...);
+}
+
+template<typename... SEMAPHORES>
+void CreateSemaphores(VkDevice device, SEMAPHORES&... semaphores)
+{
+	VkSemaphoreCreateInfo semaphore_info = {
+		VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+		nullptr,
+		0
+	};
+	
+	CreateSemaphoresRec(device, semaphore_info, semaphores...);
+}
+
+
+/*! @brief The function signature for keyboard key callbacks.
+*
+*  This is the function signature for keyboard key callback functions.
+*
+*  @param[in] window The window that received the event.
+*  @param[in] key The [keyboard key](@ref keys) that was pressed or released.
+*  @param[in] scancode The system-specific scancode of the key.
+*  @param[in] action `GLFW_PRESS`, `GLFW_RELEASE` or `GLFW_REPEAT`.
+*  @param[in] mods Bit field describing which [modifier keys](@ref mods) were
+*  held down.
+*
+*  @sa @ref input_key
+*  @sa glfwSetKeyCallback
+*
+*  @since Added in version 1.0.
+*  @glfw3 Added window handle, scancode and modifier mask parameters.
+*
+*  @ingroup input
+*/
+bool bAllowAppStart = false;
+void GLFW_OnKeyPressed(GLFWwindow*, int, int, int, int)
+{
+	bAllowAppStart = true;
+}
+
 int main(int, char**)
 {
 	if (!glfwInit())
@@ -669,6 +728,12 @@ int main(int, char**)
 	if (!window)
 	{
 		return 1;
+	}
+
+	glfwSetKeyCallback(window, GLFW_OnKeyPressed);
+	while (!glfwWindowShouldClose(window) && !bAllowAppStart)
+	{
+		glfwPollEvents();
 	}
 
 	SCOPE_EXIT(glfwDestroyWindow(window));
@@ -686,6 +751,7 @@ int main(int, char**)
 	Array<mu::vk::Framebuffer> framebuffers;
 	mu::vk::CommandPool command_pool;
 	Array<VkCommandBuffer> command_buffers;
+	mu::vk::Semaphore image_available_semaphore, render_finished_semaphore;
 	try
 	{
 		CreateVulkanInstance(instance);
@@ -716,6 +782,7 @@ int main(int, char**)
 		command_pool = CreateCommandPool(device, selected_device);
 		command_buffers = CreateCommandBuffers(device, command_pool, uint32_t(framebuffers.Num()));
 		RecordCommandBuffers(mu::Range(command_buffers), mu::Range(framebuffers), pipeline, render_pass, swapchain.extent);
+		CreateSemaphores(device, image_available_semaphore, render_finished_semaphore);
 	}
 	catch (const std::runtime_error& e)
 	{
@@ -726,7 +793,39 @@ int main(int, char**)
 	while (!glfwWindowShouldClose(window))
 	{
 		glfwPollEvents();
+
+		uint32_t image_index = 0;
+		vkAcquireNextImageKHR(device, swapchain.handle, UINT64_MAX, image_available_semaphore, nullptr, &image_index);
+
+		VkSemaphore submit_wait_semaphores[] = { image_available_semaphore };
+		VkPipelineStageFlags submit_wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+		VkSemaphore signal_semaphores[] = { render_finished_semaphore };
+		VkSubmitInfo submit_info = {
+			VK_STRUCTURE_TYPE_SUBMIT_INFO,
+			nullptr,
+			1, submit_wait_semaphores, submit_wait_stages,
+			1, &command_buffers[image_index],
+			1, signal_semaphores,
+		};
+
+		if (vkQueueSubmit(graphics_queue, 1, &submit_info, nullptr) != VK_SUCCESS)
+		{
+			throw std::runtime_error("Failed to submit command queue");
+		}
+
+		VkSemaphore present_wait_list[] = { render_finished_semaphore };
+		VkSwapchainKHR present_swapchain[] = { swapchain.handle };
+		VkPresentInfoKHR present_info =	{
+			VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
+			nullptr,
+			1, present_wait_list,
+			1, present_swapchain, &image_index,
+			nullptr
+		};
+		vkQueuePresentKHR(present_queue, &present_info);
 	}
 	
+	vkDeviceWaitIdle(device);
+
 	return 0;
 }
