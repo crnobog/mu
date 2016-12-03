@@ -12,6 +12,7 @@ namespace mu
 		template<typename T, typename DELETER, typename... ARGS>
 		class VkHandle
 		{
+		protected:
 			T m_handle;
 			std::tuple<ARGS...> m_args;
 			bool m_do_delete;
@@ -148,6 +149,15 @@ namespace mu
 				return *this;
 			}
 
+			T* Replace()
+			{
+				if (std::get<0>(m_args) == nullptr)
+				{
+					throw std::runtime_error("Trying to replace uninitialized handle");
+				}
+				return VkHandle::Replace();
+			}
+
 			~VkHandleDeviceObject()
 			{
 			}
@@ -205,6 +215,7 @@ namespace mu
 		using Pipeline					= VkHandleDeviceObject<VkPipeline,			vkDestroyPipeline>;
 		using Framebuffer				= VkHandleDeviceObject<VkFramebuffer,		vkDestroyFramebuffer>;
 		using CommandPool				= VkHandleDeviceObject<VkCommandPool,		vkDestroyCommandPool>;
+		using Semaphore					= VkHandleDeviceObject<VkSemaphore,			vkDestroySemaphore>;
 
 		Array<VkLayerProperties>		EnumerateInstanceLayerProperties();
 		Array<VkExtensionProperties>	EnumerateInstanceExtensionProperties(const char* layer_name);
