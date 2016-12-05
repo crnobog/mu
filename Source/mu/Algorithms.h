@@ -5,8 +5,10 @@ namespace mu
 {
 	// Move assign elements from the source to the destination
 	template<typename DEST_RANGE, typename SOURCE_RANGE>
-	auto Move(DEST_RANGE dest, SOURCE_RANGE source) // Copy ranges to make sure they are not modified by this operation
+	auto Move(DEST_RANGE&& in_dest, SOURCE_RANGE&& in_source)
 	{
+		auto dest = Range(std::forward<DEST_RANGE>(in_dest));
+		auto source = Range(std::forward<SOURCE_RANGE>(in_source));
 		for (; !dest.IsEmpty() && !source.IsEmpty(); dest.Advance(), source.Advance())
 		{
 			dest.Front() = std::move(source.Front());
@@ -18,8 +20,10 @@ namespace mu
 	// Assumes the destination is uninitialized or otherwise does not 
 	//	require destructors/assignment operators to be called.
 	template<typename DEST_RANGE, typename SOURCE_RANGE>
-	auto MoveConstruct(DEST_RANGE dest, SOURCE_RANGE source) // Copy ranges to make sure they are not modified by this operation
+	auto MoveConstruct(DEST_RANGE&& in_dest, SOURCE_RANGE&& in_source)
 	{
+		auto dest = Range(std::forward<DEST_RANGE>(in_dest));
+		auto source = Range(std::forward<SOURCE_RANGE>(in_source));
 		typedef std::remove_reference<decltype(dest.Front())>::type ELEMENT_TYPE;
 		for (; !dest.IsEmpty() && !source.IsEmpty(); dest.Advance(), source.Advance())
 		{

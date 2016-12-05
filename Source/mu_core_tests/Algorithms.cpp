@@ -129,7 +129,7 @@ namespace mu_core_tests_algorithms
 			Element dest[10] = {};
 			Assert::AreEqual(20, ConstructCount);
 
-			Move(Range(dest), Range(es));
+			Move(dest, es);
 			Assert::AreEqual(20, ConstructCount);
 			Assert::AreEqual(10, MoveAssignCount);
 			Assert::AreEqual(0, MoveCount);
@@ -142,7 +142,7 @@ namespace mu_core_tests_algorithms
 			Element dest[10] = {};
 			Assert::AreEqual(20, ConstructCount);
 
-			MoveConstruct(Range(dest), Range(es));
+			MoveConstruct(dest, es);
 			Assert::AreEqual(20, ConstructCount);
 			Assert::AreEqual(0, MoveAssignCount);
 			Assert::AreEqual(10, MoveCount);
