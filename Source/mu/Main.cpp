@@ -110,7 +110,7 @@ PhysicalDeviceSelection SelectPhysicalDevice(
 			bool all_found = true;
 			for (const char* needed_ext : required_extensions)
 			{
-				auto f = Find(Range(available_extensions), [needed_ext](const VkExtensionProperties& ext) { return strcmp(ext.extensionName, needed_ext) == 0; });
+				auto f = Find(available_extensions, [needed_ext](const VkExtensionProperties& ext) { return strcmp(ext.extensionName, needed_ext) == 0; });
 				all_found = all_found && !f.IsEmpty();
 			}
 

@@ -77,10 +77,13 @@ namespace mu_core_tests_algorithms
 
 			auto source = Range(from);
 			auto dest = Range(to);
+			size_t source_size_start = source.Size(), dest_size_start=dest.Size();
 			Assert::AreEqual(size_t(10), source.Size(), nullptr, LINE_INFO());
 			Assert::AreEqual(size_t(20), dest.Size(), nullptr, LINE_INFO());
 
 			auto dest2 = Move(dest, source);
+			Assert::AreEqual(dest_size_start, dest.Size());
+			Assert::AreEqual(source_size_start, source.Size());
 			Assert::AreEqual(dest.Size() - source.Size(), dest2.Size(), nullptr, LINE_INFO());
 			Assert::AreEqual(size_t(10), source.Size(), nullptr, LINE_INFO());
 
@@ -165,7 +168,7 @@ namespace mu_core_tests_algorithms
 		{
 			int arr[] = { 1,2,3,4 };
 			int expected[] = { 2,4,6,8 };
-			Map(Range(arr), [](int& a) { a *= 2; });
+			Map(arr, [](int& a) { a *= 2; });
 
 			for (auto r = Range(arr), x = Range(expected); !r.IsEmpty(); r.Advance(), x.Advance())
 			{
@@ -177,7 +180,7 @@ namespace mu_core_tests_algorithms
 		{
 			int sum = 0;
 			int arr[] = { 5, 10, 20 };
-			Map(Range(arr), [&](const int&a) {sum += a; });
+			Map(arr, [&](const int&a) {sum += a; });
 
 			Assert::AreEqual(35, sum);
 		}
@@ -199,7 +202,7 @@ namespace mu_core_tests_algorithms
 		TEST_METHOD(ReturnsNonEmptyIterator)
 		{
 			int arr[] = { 10, 20, 100, 50, 40, 6, 100, 120, 50 };
-			auto r= Find(Range(arr), [](int a) { return a < 10; });
+			auto r= Find(arr, [](int a) { return a < 10; });
 
 			Assert::IsFalse(r.IsEmpty());
 		}
@@ -207,7 +210,7 @@ namespace mu_core_tests_algorithms
 		TEST_METHOD(ReturnsEmptyIterator)
 		{
 			int arr[] = { 10, 20, 100, 50, 40, 100, 120, 50 };
-			auto r = Find(Range(arr), [](int a) { return a < 10; });
+			auto r = Find(arr, [](int a) { return a < 10; });
 
 			Assert::IsTrue(r.IsEmpty());
 		}
@@ -215,7 +218,7 @@ namespace mu_core_tests_algorithms
 		TEST_METHOD(IteratorMatchesManualAdvance)
 		{
 			int arr[] = { 10, 20, 100, 50, 40, 100, 120, 50 };
-			auto found = Find(Range(arr), [](int a) { return a == 100; });
+			auto found = Find(arr, [](int a) { return a == 100; });
 
 			auto r = Range(arr);
 			r.Advance(); r.Advance();
@@ -225,7 +228,7 @@ namespace mu_core_tests_algorithms
 		TEST_METHOD(SucessiveFinds)
 		{
 			int arr[] = { 10, 20, 100, 50, 40, 100, 120, 50 };
-			auto found = Find(Range(arr), [](int a) { return a == 100; });
+			auto found = Find(arr, [](int a) { return a == 100; });
 
 			auto first = found;
 			found.Advance();

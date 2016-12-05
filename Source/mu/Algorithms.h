@@ -5,7 +5,7 @@ namespace mu
 {
 	// Move assign elements from the source to the destination
 	template<typename DEST_RANGE, typename SOURCE_RANGE>
-	auto Move(DEST_RANGE dest, SOURCE_RANGE source)
+	auto Move(DEST_RANGE dest, SOURCE_RANGE source) // Copy ranges to make sure they are not modified by this operation
 	{
 		for (; !dest.IsEmpty() && !source.IsEmpty(); dest.Advance(), source.Advance())
 		{
@@ -18,7 +18,7 @@ namespace mu
 	// Assumes the destination is uninitialized or otherwise does not 
 	//	require destructors/assignment operators to be called.
 	template<typename DEST_RANGE, typename SOURCE_RANGE>
-	auto MoveConstruct(DEST_RANGE dest, SOURCE_RANGE source)
+	auto MoveConstruct(DEST_RANGE dest, SOURCE_RANGE source) // Copy ranges to make sure they are not modified by this operation
 	{
 		typedef std::remove_reference<decltype(dest.Front())>::type ELEMENT_TYPE;
 		for (; !dest.IsEmpty() && !source.IsEmpty(); dest.Advance(), source.Advance())
@@ -31,8 +31,7 @@ namespace mu
 	template<typename RANGE, typename FUNC>
 	auto Map(RANGE&& in_r, FUNC&& f)
 	{
-		typedef std::decay<RANGE>::type RANGE_TYPE;
-		for (RANGE_TYPE r{ std::forward<RANGE_TYPE>(in_r) }; 
+		for (auto&& r = Range(std::forward<RANGE>(in_r));
 			 !r.IsEmpty(); r.Advance())
 		{
 			f(r.Front());
@@ -42,8 +41,7 @@ namespace mu
 	template<typename RANGE, typename FUNC>
 	auto Find(RANGE&& in_r, FUNC&& f)
 	{
-		typedef std::decay<RANGE>::type RANGE_TYPE;
-		RANGE_TYPE r{ std::forward<RANGE_TYPE>(in_r) };
+		auto&& r = Range(std::forward<RANGE>(in_r));
 		for (; !r.IsEmpty(); r.Advance())
 		{
 			if (f(r.Front()))
@@ -57,11 +55,9 @@ namespace mu
 	template<typename RANGE, typename FUNC>
 	auto FindNext(RANGE&& in_r, FUNC&& f)
 	{
-		typedef std::decay<RANGE>::type RANGE_TYPE;
-
 		if (in_r.IsEmpty()) { return in_r; }
 
-		RANGE_TYPE r{ std::forward<RANGE_TYPE>(in_r) };
+		auto&& r = Range(std::forward<RANGE>(in_r));
 		r.Advance(); // Skip the last found value
 		for (; !r.IsEmpty(); r.Advance())
 		{
@@ -77,8 +73,7 @@ namespace mu
 	template<typename RANGE, typename... ARGS>
 	void FillConstruct(RANGE&& in_r, ARGS... args)
 	{
-		typedef std::decay<RANGE>::type RANGE_TYPE;
-		RANGE_TYPE r{ std::forward<RANGE_TYPE>(in_r) };
+		auto&& r = Range(std::forward<RANGE>(in_r));
 
 		typedef std::decay<decltype(r.Front())>::type ITEM_TYPE;
 
@@ -91,8 +86,7 @@ namespace mu
 	template<typename RANGE, typename... ARGS>
 	void Fill(RANGE&& in_r, ARGS... args)
 	{
-		typedef std::decay<RANGE>::type RANGE_TYPE;
-		RANGE_TYPE r{ std::forward<RANGE_TYPE>(in_r) };
+		auto&& r = Range(std::forward<RANGE>(in_r));
 
 		typedef std::decay<decltype(r.Front())>::type ITEM_TYPE;
 
