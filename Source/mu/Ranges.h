@@ -53,8 +53,14 @@ namespace mu
 		return Range(arr.Data(), arr.Num());
 	}
 
+	template<typename RANGE>
+	auto Range(RANGE&& r)
+	{
+		return std::forward<RANGE>(r);
+	}
+
 	template<typename... RANGES>
-	auto Zip(RANGES... ranges) { return ranges::ZipRange<RANGES...>(ranges...); }
+	auto Zip(RANGES... ranges) { return ranges::ZipRange<RANGES...>(Range(ranges)...); }
 
 	template<typename T=size_t>
 	inline auto Iota(T start = 0) { return ranges::IotaRange<T>(start); }
