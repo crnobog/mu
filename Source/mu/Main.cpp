@@ -15,6 +15,7 @@
 #include "FileReader.h"
 
 using std::tuple;
+using namespace mu;
 
 VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 	VkDebugReportFlagsEXT                       flags,
@@ -26,11 +27,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VkDebugCallback(
 	const char*                                 pMessage,
 	void*                                       pUserData)
 {
-	mu::dbg::Log(pMessage);
+	dbg::Log(pMessage);
 	return VK_FALSE;
 }
 
-void CreateVulkanInstance(mu::vk::Instance& out_instance)
+void CreateVulkanInstance(vk::Instance& out_instance)
 {
 	Array<const char*> instance_extensions;
 	{
@@ -64,7 +65,7 @@ void CreateVulkanInstance(mu::vk::Instance& out_instance)
 	}
 }
 
-void RegisterDebugCallback(VkInstance instance, mu::vk::DebugReportCallbackEXT& out_debug_callback)
+void RegisterDebugCallback(VkInstance instance, vk::DebugReportCallbackEXT& out_debug_callback)
 {
 	auto create_func = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugReportCallbackEXT");
 	auto destroy_func = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT");
@@ -80,7 +81,7 @@ void RegisterDebugCallback(VkInstance instance, mu::vk::DebugReportCallbackEXT& 
 		VkDebugCallback,
 		nullptr
 	};
-	out_debug_callback = mu::vk::DebugReportCallbackEXT{ destroy_func, instance, nullptr };
+	out_debug_callback = vk::DebugReportCallbackEXT{ destroy_func, instance, nullptr };
 	if (create_func(instance, &debug_callback_create_info, nullptr, out_debug_callback.Replace()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Unable to register debug callback");
@@ -100,29 +101,29 @@ PhysicalDeviceSelection SelectPhysicalDevice(
 	VkInstance instance, 
 	VkSurfaceKHR surface)
 {
-	Array<VkPhysicalDevice> devices = mu::vk::EnumeratePhysicalDevices(instance);
+	Array<VkPhysicalDevice> devices = vk::EnumeratePhysicalDevices(instance);
 
 	for (VkPhysicalDevice device : devices)
 	{		
 		{
-			Array<VkExtensionProperties> available_extensions = mu::vk::EnumerateDeviceExtensionProperties(device);
+			Array<VkExtensionProperties> available_extensions = vk::EnumerateDeviceExtensionProperties(device);
 			bool all_found = true;
 			for (const char* needed_ext : required_extensions)
 			{
-				auto f = mu::Find(mu::Range(available_extensions), [needed_ext](const VkExtensionProperties& ext) { return strcmp(ext.extensionName, needed_ext) == 0; });
+				auto f = Find(Range(available_extensions), [needed_ext](const VkExtensionProperties& ext) { return strcmp(ext.extensionName, needed_ext) == 0; });
 				all_found = all_found && !f.IsEmpty();
 			}
 
 			if (!all_found) { continue; }
 		}
 
-		mu::vk::SwapChainSupport swap_chain = mu::vk::QuerySwapChainSupport(device, surface);
+		vk::SwapChainSupport swap_chain = vk::QuerySwapChainSupport(device, surface);
 		if (swap_chain.surface_formats.IsEmpty() || swap_chain.present_modes.IsEmpty())
 		{
 			continue;
 		}
 
-		Array<VkQueueFamilyProperties> queue_props = mu::vk::GetPhysicalDeviceQueueFamilyProperties(device);
+		Array<VkQueueFamilyProperties> queue_props = vk::GetPhysicalDeviceQueueFamilyProperties(device);
 		int32_t graphics_index = -1, present_index = -1;
 		for (int32_t i = 0; i < queue_props.Num(); ++i)
 		{
@@ -147,7 +148,7 @@ PhysicalDeviceSelection SelectPhysicalDevice(
 			PhysicalDeviceSelection selection{ device,{}, (uint32_t)graphics_index, (uint32_t)present_index};
 			vkGetPhysicalDeviceProperties(device, &selection.m_device_properties); 
 
-			mu::dbg::Log("Using physical device: ", selection.m_device_properties.deviceName, ", graphics queue family: ", graphics_index, ", present queue family:", present_index);
+			dbg::Log("Using physical device: ", selection.m_device_properties.deviceName, ", graphics queue family: ", graphics_index, ", present queue family:", present_index);
 			
 			return selection;
 		}
@@ -189,7 +190,7 @@ VkPresentModeKHR ChoosePresentMode(const Array<VkPresentModeKHR>& present_modes)
 
 VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& surface_caps, uint32_t fb_width, uint32_t fb_height)
 {
-	if (mu::vk::ExtentWithin(surface_caps.currentExtent, surface_caps.minImageExtent, surface_caps.maxImageExtent))
+	if (vk::ExtentWithin(surface_caps.currentExtent, surface_caps.minImageExtent, surface_caps.maxImageExtent))
 	{
 		return surface_caps.currentExtent;
 	}
@@ -203,15 +204,15 @@ void CreateDevice(
 	GLFWwindow* window,
 	VkInstance instance,
 	VkSurfaceKHR surface,
-	mu::vk::Device& out_device,
+	vk::Device& out_device,
 	VkQueue& out_graphics_queue, VkQueue& out_present_queue)
 {	
-	mu::vk::SwapChainSupport swap_chain_support = mu::vk::QuerySwapChainSupport(selected_device.m_device, surface);
+	vk::SwapChainSupport swap_chain_support = vk::QuerySwapChainSupport(selected_device.m_device, surface);
 	ChooseSurfaceFormat(swap_chain_support.surface_formats);
 
 	float priority = 1.0f;
 	auto queue_families = Array<uint32_t>::MakeUnique( selected_device.m_graphics_queue_family, selected_device.m_present_queue_family );
-	Array<VkDeviceQueueCreateInfo> queue_create_info{ mu::Transform(mu::Range(queue_families), [&](uint32_t index) {
+	Array<VkDeviceQueueCreateInfo> queue_create_info{ Transform(Range(queue_families), [&](uint32_t index) {
 		return VkDeviceQueueCreateInfo{
 			VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
 			nullptr,
@@ -242,9 +243,9 @@ void CreateDevice(
 
 struct Swapchain
 {
-	mu::vk::SwapchainKHR handle;
+	vk::SwapchainKHR handle;
 	Array<VkImage> images;
-	Array<mu::vk::ImageView> image_views;
+	Array<vk::ImageView> image_views;
 	VkFormat image_format;
 	VkExtent2D extent;
 };
@@ -258,7 +259,7 @@ Swapchain CreateSwapChain(
 	int fb_width = 0, fb_height = 0;
 	glfwGetFramebufferSize(window, &fb_width, &fb_height);
 
-	mu::vk::SwapChainSupport swap_chain_support = mu::vk::QuerySwapChainSupport(device_selection.m_device, surface);
+	vk::SwapChainSupport swap_chain_support = vk::QuerySwapChainSupport(device_selection.m_device, surface);
 	VkSurfaceFormatKHR surface_format = ChooseSurfaceFormat(swap_chain_support.surface_formats);
 	VkPresentModeKHR present_mode = ChoosePresentMode(swap_chain_support.present_modes);
 	VkExtent2D extent = ChooseSwapExtent(swap_chain_support.capabilities, fb_width, fb_height);
@@ -291,13 +292,13 @@ Swapchain CreateSwapChain(
 		VK_TRUE, // clipped
 		VK_NULL_HANDLE, // oldSwapchain
 	};
-	mu::vk::SwapchainKHR out_swapchain{ device, nullptr };
+	vk::SwapchainKHR out_swapchain{ device, nullptr };
 	if (vkCreateSwapchainKHR(device, &swapchain_create_info, nullptr, out_swapchain.Replace()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create swap chain");
 	}
-	Array<VkImage> images = mu::vk::GetSwapchainImagesKHR(device, out_swapchain);
-	Array<mu::vk::ImageView> image_views;
+	Array<VkImage> images = vk::GetSwapchainImagesKHR(device, out_swapchain);
+	Array<vk::ImageView> image_views;
 	for (VkImage image : images)
 	{
 		VkImageViewCreateInfo image_view_create_info{
@@ -309,7 +310,7 @@ Swapchain CreateSwapChain(
 			{ VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY, VK_COMPONENT_SWIZZLE_IDENTITY }, // components
 			{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 } // subresourcerange
 		};
-		mu::vk::ImageView view{ device, nullptr };
+		vk::ImageView view{ device, nullptr };
 		vkCreateImageView(device, &image_view_create_info, nullptr, view.Replace());
 		image_views.Add(std::move(view));
 	}
@@ -317,7 +318,7 @@ Swapchain CreateSwapChain(
 	return{ std::move(out_swapchain), std::move(images), std::move(image_views), surface_format.format, extent };
 }
 
-mu::vk::ShaderModule CreateShaderModule(VkDevice device, const mu::ranges::PointerRange<uint8_t>& code)
+vk::ShaderModule CreateShaderModule(VkDevice device, const ranges::PointerRange<uint8_t>& code)
 {
 	VkShaderModuleCreateInfo create_info = {
 		VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -326,7 +327,7 @@ mu::vk::ShaderModule CreateShaderModule(VkDevice device, const mu::ranges::Point
 		code.Size(), reinterpret_cast<const uint32_t*>(&code.Front()),
 	};
 
-	mu::vk::ShaderModule shader_module{ device, nullptr };
+	vk::ShaderModule shader_module{ device, nullptr };
 	if (vkCreateShaderModule(device, &create_info, nullptr, shader_module.Replace()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create shader module");
@@ -334,7 +335,7 @@ mu::vk::ShaderModule CreateShaderModule(VkDevice device, const mu::ranges::Point
 	return std::move(shader_module);
 }
 
-mu::vk::PipelineLayout CreatePipelineLayout(VkDevice device)
+vk::PipelineLayout CreatePipelineLayout(VkDevice device)
 {
 	VkPipelineLayoutCreateInfo pipeline_create_info = {
 		VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
@@ -344,7 +345,7 @@ mu::vk::PipelineLayout CreatePipelineLayout(VkDevice device)
 		0, nullptr,	// push constants
 	};
 
-	auto pipeline_layout = mu::vk::PipelineLayout{ device, nullptr };
+	auto pipeline_layout = vk::PipelineLayout{ device, nullptr };
 	if (vkCreatePipelineLayout(device, &pipeline_create_info, nullptr, pipeline_layout.Replace()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create pipeline layout");
@@ -352,7 +353,7 @@ mu::vk::PipelineLayout CreatePipelineLayout(VkDevice device)
 	return pipeline_layout;
 }
 
-mu::vk::RenderPass CreateRenderPass(VkDevice device, VkFormat swapchain_format)
+vk::RenderPass CreateRenderPass(VkDevice device, VkFormat swapchain_format)
 {
 	VkAttachmentDescription color_attachment = {
 		0, // flags
@@ -396,7 +397,7 @@ mu::vk::RenderPass CreateRenderPass(VkDevice device, VkFormat swapchain_format)
 		0, nullptr
 	};
 
-	mu::vk::RenderPass render_pass{ device, nullptr };
+	vk::RenderPass render_pass{ device, nullptr };
 	if (vkCreateRenderPass(device, &render_pass_info, nullptr, render_pass.Replace()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create render pass");
@@ -404,7 +405,7 @@ mu::vk::RenderPass CreateRenderPass(VkDevice device, VkFormat swapchain_format)
 	return std::move(render_pass);
 }
 
-mu::vk::Pipeline CreatePipeline(
+vk::Pipeline CreatePipeline(
 	VkDevice			device, 
 	VkPipelineLayout	pipeline_layout, 
 	VkRenderPass		render_pass, 
@@ -546,7 +547,7 @@ mu::vk::Pipeline CreatePipeline(
 		nullptr, -1 // base pipeline
 	};
 
-	mu::vk::Pipeline pipeline{ device, nullptr };
+	vk::Pipeline pipeline{ device, nullptr };
 	if (vkCreateGraphicsPipelines(device, nullptr, 1, &pipeline_info, nullptr, pipeline.Replace()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create pipeline");
@@ -554,15 +555,15 @@ mu::vk::Pipeline CreatePipeline(
 	return std::move(pipeline);
 }
 
-Array<mu::vk::Framebuffer> CreateFramebuffers(
+Array<vk::Framebuffer> CreateFramebuffers(
 	VkDevice device,
 	VkRenderPass render_pass,
 	const Swapchain& swapchain)
 {
-	auto framebuffers = Array<mu::vk::Framebuffer>::MakeUninitialized(swapchain.image_views.Num());
-	mu::FillConstruct(mu::Range(framebuffers), device, nullptr);
+	auto framebuffers = Array<vk::Framebuffer>::MakeUninitialized(swapchain.image_views.Num());
+	FillConstruct(Range(framebuffers), device, nullptr);
 
-	for (std::tuple<const mu::vk::ImageView&, mu::vk::Framebuffer&> pair : mu::Zip(mu::Range(swapchain.image_views), mu::Range(framebuffers)))
+	for (std::tuple<const vk::ImageView&, vk::Framebuffer&> pair : Zip(Range(swapchain.image_views), Range(framebuffers)))
 	{
 		VkImageView attachments[] = { std::get<0>(pair) };
 
@@ -585,7 +586,7 @@ Array<mu::vk::Framebuffer> CreateFramebuffers(
 	return std::move(framebuffers);
 }
 
-mu::vk::CommandPool CreateCommandPool(VkDevice device, const PhysicalDeviceSelection& device_info)
+vk::CommandPool CreateCommandPool(VkDevice device, const PhysicalDeviceSelection& device_info)
 {
 	VkCommandPoolCreateInfo pool_info = {
 		VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
@@ -594,7 +595,7 @@ mu::vk::CommandPool CreateCommandPool(VkDevice device, const PhysicalDeviceSelec
 		device_info.m_graphics_queue_family
 	};
 
-	mu::vk::CommandPool command_pool{ device, nullptr };
+	vk::CommandPool command_pool{ device, nullptr };
 	if (vkCreateCommandPool(device, &pool_info, nullptr, command_pool.Replace()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create command pool");
@@ -621,13 +622,13 @@ Array<VkCommandBuffer> CreateCommandBuffers(VkDevice device, VkCommandPool comma
 }
 
 void RecordCommandBuffers(
-	mu::ranges::PointerRange<VkCommandBuffer> command_buffers,
-	mu::ranges::PointerRange<mu::vk::Framebuffer> framebuffers,
+	ranges::PointerRange<VkCommandBuffer> command_buffers,
+	ranges::PointerRange<vk::Framebuffer> framebuffers,
 	VkPipeline graphics_pipeline,
 	VkRenderPass render_pass,
 	VkExtent2D framebuffer_extent)
 {
-	for (tuple<VkCommandBuffer&, mu::vk::Framebuffer&> pair : mu::Zip(command_buffers, framebuffers))
+	for (tuple<VkCommandBuffer&, vk::Framebuffer&> pair : Zip(command_buffers, framebuffers))
 	{
 		VkCommandBuffer command_buffer = std::get<0>(pair);
 		VkFramebuffer framebuffer = std::get<1>(pair);
@@ -663,12 +664,12 @@ void RecordCommandBuffers(
 	}
 }
 
-void CreateSemaphoresRec(VkDevice device, VkSemaphoreCreateInfo& semaphore_info/*, mu::vk::Semaphore& semaphore*/) { }
+void CreateSemaphoresRec(VkDevice device, VkSemaphoreCreateInfo& semaphore_info/*, vk::Semaphore& semaphore*/) { }
 
 template<typename... SEMAPHORES>
-void CreateSemaphoresRec(VkDevice device, VkSemaphoreCreateInfo& semaphore_info, mu::vk::Semaphore& semaphore, SEMAPHORES&... semaphores)
+void CreateSemaphoresRec(VkDevice device, VkSemaphoreCreateInfo& semaphore_info, vk::Semaphore& semaphore, SEMAPHORES&... semaphores)
 {
-	semaphore = mu::vk::Semaphore{ device, nullptr };
+	semaphore = vk::Semaphore{ device, nullptr };
 	if (vkCreateSemaphore(device, &semaphore_info, nullptr, semaphore.Replace()) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Failed to create semaphore");
@@ -738,26 +739,26 @@ int main(int, char**)
 
 	SCOPE_EXIT(glfwDestroyWindow(window));
 
-	mu::vk::Instance instance;
-	mu::vk::DebugReportCallbackEXT debug_callbacks;
-	mu::vk::Device device;
-	mu::vk::SurfaceKHR surface;
+	vk::Instance instance;
+	vk::DebugReportCallbackEXT debug_callbacks;
+	vk::Device device;
+	vk::SurfaceKHR surface;
 	Swapchain swapchain;
 	VkQueue graphics_queue, present_queue;
-	mu::vk::ShaderModule vert_shader, frag_shader;
-	mu::vk::PipelineLayout pipeline_layout;
-	mu::vk::RenderPass render_pass;
-	mu::vk::Pipeline pipeline;
-	Array<mu::vk::Framebuffer> framebuffers;
-	mu::vk::CommandPool command_pool;
+	vk::ShaderModule vert_shader, frag_shader;
+	vk::PipelineLayout pipeline_layout;
+	vk::RenderPass render_pass;
+	vk::Pipeline pipeline;
+	Array<vk::Framebuffer> framebuffers;
+	vk::CommandPool command_pool;
 	Array<VkCommandBuffer> command_buffers;
-	mu::vk::Semaphore image_available_semaphore, render_finished_semaphore;
+	vk::Semaphore image_available_semaphore, render_finished_semaphore;
 	try
 	{
 		CreateVulkanInstance(instance);
 		RegisterDebugCallback(instance, debug_callbacks);
 
-		surface = mu::vk::SurfaceKHR{ instance, nullptr };
+		surface = vk::SurfaceKHR{ instance, nullptr };
 		VkResult err = glfwCreateWindowSurface(instance, window, nullptr, surface.Replace());
 		if (err)
 		{
@@ -770,10 +771,10 @@ int main(int, char**)
 		swapchain = CreateSwapChain(window, selected_device, device, surface);
 
 		auto vert_shader_code = LoadFileToArray("../Shaders/Bin/shader.vert.spv");
-		vert_shader = CreateShaderModule(device, mu::Range(vert_shader_code));
+		vert_shader = CreateShaderModule(device, Range(vert_shader_code));
 
 		auto frag_shader_code = LoadFileToArray("../Shaders/Bin/shader.frag.spv");
-		frag_shader = CreateShaderModule(device, mu::Range(frag_shader_code));
+		frag_shader = CreateShaderModule(device, Range(frag_shader_code));
 
 		pipeline_layout = CreatePipelineLayout(device);
 		render_pass = CreateRenderPass(device, swapchain.image_format);
@@ -781,12 +782,12 @@ int main(int, char**)
 		framebuffers = CreateFramebuffers(device, render_pass, swapchain);
 		command_pool = CreateCommandPool(device, selected_device);
 		command_buffers = CreateCommandBuffers(device, command_pool, uint32_t(framebuffers.Num()));
-		RecordCommandBuffers(mu::Range(command_buffers), mu::Range(framebuffers), pipeline, render_pass, swapchain.extent);
+		RecordCommandBuffers(Range(command_buffers), Range(framebuffers), pipeline, render_pass, swapchain.extent);
 		CreateSemaphores(device, image_available_semaphore, render_finished_semaphore);
 	}
 	catch (const std::runtime_error& e)
 	{
-		mu::dbg::Log("InitVulkan error: ", e.what());
+		dbg::Log("InitVulkan error: ", e.what());
 		return 1;
 	}
 
